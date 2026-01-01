@@ -227,10 +227,6 @@
             <div v-if="weatherData" class="relative z-10 flex items-center justify-center gap-2 text-[var(--theme-main)] text-sm font-bold w-full mx-auto -mt-6 -mb-6 animate-fade-in bg-[var(--theme-light)]/50 backdrop-blur py-0.5 rounded-md">
                 <span class="text-xl">{{ weatherData.icon }}</span><span>{{ weatherData.temp }}°C</span><span class="text-[var(--text-sub)] font-normal text-xs">{{ weatherData.desc }}</span>
             </div>
-            <div v-else class="relative z-10 text-center text-[10px] text-[var(--text-sub)] -mt-3 mb-1 py-0.5 font-bold">
-                <span v-if="weatherStatus === 'loading'">正在分析地點氣象...</span>
-                <span v-else-if="weatherStatus === 'error'">氣象連線失敗</span>
-            </div>
 
             <div class="relative group">
                 <div id="google-map" class="bg-[var(--theme-light)] flex items-center justify-center text-[var(--theme-accent)] text-xs tracking-widest">
@@ -247,22 +243,27 @@
 
             <div class="space-y-2">
                 <template v-for="(item, index) in (days[currentDayIndex] ? days[currentDayIndex].activities : [])" :key="index">
+                    <!-- 行程小卡 (優化手機端排版) -->
                     <div class="flex items-stretch gap-0 group relative bg-transparent hover:bg-[var(--bg-card)] rounded-lg transition overflow-hidden">
-                        <div class="flex-1 flex items-start gap-2 py-2 pl-2">
-                            <div class="flex flex-col items-center justify-start gap-1 w-24 flex-shrink-0 pt-1">
+                        <div class="flex-1 flex items-start gap-2 py-2 pl-2 min-w-0">
+                            <!-- 左側時間與類型 -->
+                            <div class="flex flex-col items-center justify-start gap-1 w-20 flex-shrink-0 pt-1">
                                 <div class="flex items-center justify-center bg-[var(--bg-card)] rounded px-1 py-1 border border-[var(--theme-light)] shadow-sm w-full">
-                                    <select :value="getHour(item.time)" @change="updateTime(item, $event.target.value, 'hour')" class="time-select text-lg w-8 text-[var(--theme-main)]"><option v-for="h in hourOptions" :value="h">{{ h }}</option></select>
+                                    <select :value="getHour(item.time)" @change="updateTime(item, $event.target.value, 'hour')" class="time-select text-base w-7 text-[var(--theme-main)]"><option v-for="h in hourOptions" :value="h">{{ h }}</option></select>
                                     <span class="text-[var(--text-sub)] font-bold mx-0.5">:</span>
-                                    <select :value="getMinute(item.time)" @change="updateTime(item, $event.target.value, 'minute')" class="time-select text-lg w-8 text-[var(--theme-main)]"><option v-for="m in minuteOptions" :value="m">{{ m }}</option></select>
+                                    <select :value="getMinute(item.time)" @change="updateTime(item, $event.target.value, 'minute')" class="time-select text-base w-7 text-[var(--theme-main)]"><option v-for="m in minuteOptions" :value="m">{{ m }}</option></select>
                                 </div>
-                                <select v-model="item.type" @change="saveData" class="appearance-none w-full text-xs font-bold text-center text-[var(--text-sub)] bg-transparent outline-none cursor-pointer py-1">
+                                <select v-model="item.type" @change="saveData" class="appearance-none w-full text-[10px] font-bold text-center text-[var(--text-sub)] bg-transparent outline-none cursor-pointer py-1">
                                     <option value="sightseeing">📷 景點</option><option value="transport">🚅 交通</option><option value="food">🍴 美食</option><option value="accommodation">🏨 住宿</option><option value="other">📦 其他</option>
                                 </select>
                             </div>
+
                             <div class="w-[3px] self-stretch rounded-full opacity-60 my-1 flex-shrink-0" :class="getTypeColor(item.type)"></div>
-                            <div class="flex-1 space-y-0 pb-0.5 border-b border-[var(--theme-light)] group-hover:border-transparent transition min-w-0 pr-2">
-                                <div class="flex items-center gap-1">
-                                    <input v-model="item.place" @change="saveData" @focus="initAutocomplete(index, $event)" placeholder="地點名稱" class="flex-1 text-lg font-bold text-[var(--text-main)] placeholder-[var(--text-sub)] bg-transparent outline-none">
+
+                            <!-- 中間地點輸入 (優化 min-w-0 防止推擠) -->
+                            <div class="flex-1 space-y-0 pb-0.5 border-b border-[var(--theme-light)] group-hover:border-transparent transition min-w-0">
+                                <div class="flex items-center gap-1 w-full">
+                                    <input v-model="item.place" @change="saveData" @focus="initAutocomplete(index, $event)" placeholder="地點名稱" class="flex-1 text-base font-bold text-[var(--text-main)] placeholder-[var(--text-sub)] bg-transparent outline-none min-w-0 truncate">
                                     <button @click="handleActivityLink(item)" 
                                             class="transition p-1 flex-shrink-0"
                                             :class="item.link ? 'text-[var(--theme-main)] scale-110' : 'text-[var(--theme-light)] hover:text-[var(--theme-accent)]'">
@@ -273,17 +274,22 @@
                                 </div>
                                 <textarea rows="1" v-model="item.note" @change="saveData" placeholder="備註..." @input="autoGrow($event.target)" class="w-full text-[10px] text-[var(--text-sub)] bg-transparent outline-none resize-y leading-tight custom-scroll min-h-[24px]"></textarea>
                             </div>
-                            <div class="flex flex-col gap-1 items-center justify-center self-center pr-1">
+
+                            <!-- 右側功能鈕 (確保不被遮擋) -->
+                            <div class="flex flex-col gap-1 items-center justify-center self-center pr-1 flex-shrink-0 w-8">
                                 <button v-if="item.type !== 'transport'" @click="openGoogleMaps(item.place)" class="text-[var(--link-blue)] hover:text-blue-600 transition p-1"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" /></svg></button>
                                 <button @click="deleteActivity(index)" class="text-[var(--theme-light)] hover:text-[var(--danger)] p-1 transition"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg></button>
                             </div>
                         </div>
-                        <div class="w-4 border-l border-[var(--theme-light)] flex flex-col justify-center items-center bg-[var(--bg-body)]">
+
+                        <!-- 排序按鈕 -->
+                        <div class="w-4 border-l border-[var(--theme-light)] flex flex-col justify-center items-center bg-[var(--bg-body)] flex-shrink-0">
                             <button @click.stop="moveActivity(index, -1)" class="h-1/2 w-full flex items-center justify-center text-[var(--theme-accent)] hover:text-[var(--theme-main)] hover:bg-[var(--theme-light)]/50 transition disabled:opacity-20" :disabled="index === 0">▲</button>
                             <button @click.stop="moveActivity(index, 1)" class="h-1/2 w-full flex items-center justify-center text-[var(--theme-accent)] hover:text-[var(--theme-main)] hover:bg-[var(--theme-light)]/50 transition disabled:opacity-20" :disabled="index === (days[currentDayIndex].activities.length - 1)">▼</button>
                         </div>
                     </div>
 
+                    <!-- 交通接駁資訊 -->
                     <div v-if="index < days[currentDayIndex].activities.length - 1" class="ml-12 my-0.5 flex flex-col items-start border-l-2 border-dotted border-[var(--theme-light)] pl-4 min-h-[16px] transition-all">
                         <button v-if="!item.transportToNext && !item.showTransportInput" @click="item.showTransportInput = true" class="text-[9px] font-bold text-[var(--theme-accent)] hover:text-[var(--theme-main)] transition-colors py-0.5 opacity-40 hover:opacity-100 flex items-center gap-1"><span>+</span> 接駁</button>
                         <div v-else class="w-full flex items-start gap-2 animate-fade-in pr-4 pb-1">
@@ -362,7 +368,6 @@
                         </div>
                     </div>
                     <div class="absolute top-2 right-2 flex items-center gap-1">
-                        <!-- 優化：空心鋼筆按鈕 -->
                         <button @click="openWishEditModal(item.originalIndex)" class="text-[var(--text-sub)] hover:text-[var(--theme-main)] p-2 transition rounded-full hover:bg-[var(--theme-light)]/50" title="編輯">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
@@ -379,11 +384,10 @@
             </div>
             <div class="bg-[var(--bg-card)] rounded-xl border border-[var(--theme-light)] p-4 shadow-sm space-y-3 mt-4">
                 <div class="flex justify-between items-center"><h4 class="text-xs font-bold text-[var(--text-main)]">新增項目</h4><select v-model="newWishItem.day" class="text-[10px] font-bold bg-[var(--bg-body)] border border-[var(--theme-light)] rounded px-2 py-1 text-[var(--theme-main)]"><option value="all">不指定日期</option><option v-for="(day, idx) in days" :key="idx" :value="idx">預定於 Day {{ idx + 1 }}</option></select></div>
-                <input v-model="newWishItem.name" placeholder="名稱 (例: 一蘭拉麵)" class="w-full text-sm outline-none placeholder-[var(--text-sub)] border-b border-[var(--theme-light)] pb-1 transition text-[var(--text-main)] bg-transparent"><input v-model="newWishItem.note" placeholder="備註" class="w-full text-sm outline-none placeholder-[var(--text-sub)] border-b border-[var(--theme-light)] pb-1 transition text-[var(--text-main)] bg-transparent"><input v-model="newWishItem.url" placeholder="連結" class="w-full text-sm outline-none placeholder-[var(--text-sub)] border-b border-[var(--theme-light)] pb-1 transition text-[var(--text-main)] bg-transparent"><input v-model="newWishItem.address" placeholder="地址" class="w-full text-sm outline-none placeholder-[var(--text-sub)] border-b border-[var(--theme-light)] pb-1 transition text-[var(--text-main)] bg-transparent"><button @click="addWishItem" class="w-full bg-[var(--theme-main)] text-white py-2.5 rounded text-xs font-bold tracking-widest mt-2 hover:bg-[var(--theme-accent)] transition">ADD ITEM</button>
+                <input v-model="newWishItem.name" placeholder="名稱" class="w-full text-sm outline-none border-b border-[var(--theme-light)] pb-1 transition text-[var(--text-main)] bg-transparent"><input v-model="newWishItem.note" placeholder="備註" class="w-full text-sm outline-none border-b border-[var(--theme-light)] pb-1 transition text-[var(--text-main)] bg-transparent"><input v-model="newWishItem.url" placeholder="連結" class="w-full text-sm outline-none border-b border-[var(--theme-light)] pb-1 transition text-[var(--text-main)] bg-transparent"><input v-model="newWishItem.address" placeholder="地址" class="w-full text-sm outline-none border-b border-[var(--theme-light)] pb-1 transition text-[var(--text-main)] bg-transparent"><button @click="addWishItem" class="w-full bg-[var(--theme-main)] text-white py-2.5 rounded text-xs font-bold tracking-widest mt-2 hover:bg-[var(--theme-accent)] transition">ADD ITEM</button>
             </div>
         </div>
 
-        <!-- OTHER PAGES (Links, Packing) - REMAIN UNCHANGED -->
         <div v-if="currentTab === 'links'" class="space-y-6">
             <h3 class="section-title" style="padding-left:0;">CLOUD & LINKS</h3>
             <div class="space-y-3">
@@ -428,12 +432,10 @@
                 days: [{ activities: [{ time: '10:00', place: '', type: 'transport', note: '', transportToNext: '', showTransportInput: false, link: '' }], dailyNote: '' }],
                 members: ['我', '旅伴'], newMemberName: '',
                 showRates: false, displayCurrency: 'TWD', analysisCurrency: 'TWD',
-                analysisFilter: 'all', 
-                rates: { TWD: 1, JPY: 0.22, USD: 32.5, EUR: 35.0 },
+                analysisFilter: 'all', rates: { TWD: 1, JPY: 0.22, USD: 32.5, EUR: 35.0 },
                 expenses: [], splitMode: 'equal', customSplitAmounts: {},
                 newExpense: { title: '', amount: '', payer: '', currency: 'TWD', involved: ['我', '旅伴'], category: 'food', splitType: 'equal', customData: {} },
-                externalLinks: [], newLink: { title: '', url: '' },
-                wishlist: [], newWishItem: { name: '', url: '', address: '', note: '', day: 'all' },
+                externalLinks: [], wishlist: [], newWishItem: { name: '', url: '', address: '', note: '', day: 'all' },
                 wishlistFilterDay: 'all', wishlistPage: 1, wishlistItemsPerPage: 10,
                 showWishEditModal: false, editingWishIdx: null, editWishTemp: { name: '', day: 'all', note: '', url: '', address: '' },
                 showAnalysis: true, showSettlement: true, showMembers: true, collapsedDates: {},
@@ -477,11 +479,11 @@
             toggleDateGroup(dateKey) { this.collapsedDates[dateKey] = !this.collapsedDates[dateKey]; },
             prevPage() { if (this.wishlistPage > 1) this.wishlistPage--; },
             nextPage() { if (this.wishlistPage < this.totalWishlistPages) this.wishlistPage++; },
-            loadDefaultPackingItems() { const defaults = ["護照", "外幣", "換洗衣物", "網卡"]; if (!this.packingList[this.currentPackingMember]) this.packingList[this.currentPackingMember] = []; defaults.forEach(name => { if (!this.packingList[this.currentPackingMember].some(i => i.name === name)) { this.packingList[this.currentPackingMember].push({ name, checked: false }); } }); this.saveData(); },
+            loadDefaultPackingItems() { const defaults = ["護照", "外幣", "換洗衣物", "充電器", "常備藥", "網卡"]; if (!this.packingList[this.currentPackingMember]) this.packingList[this.currentPackingMember] = []; defaults.forEach(name => { if (!this.packingList[this.currentPackingMember].some(i => i.name === name)) { this.packingList[this.currentPackingMember].push({ name, checked: false }); } }); this.saveData(); },
             addPackingItem() { if(this.newPackingItem.trim()) { if (!this.packingList[this.currentPackingMember]) this.packingList[this.currentPackingMember] = []; this.packingList[this.currentPackingMember].push({ name: this.newPackingItem.trim(), checked: false }); this.newPackingItem = ''; this.saveData(); } },
-            deletePackingItem(idx) { if(confirm("刪除此物品？")) { this.packingList[this.currentPackingMember].splice(idx, 1); this.saveData(); } },
+            deletePackingItem(idx) { if(confirm("刪除物品？")) { this.packingList[this.currentPackingMember].splice(idx, 1); this.saveData(); } },
             addWishItem() { if (this.newWishItem.name) { this.wishlist.push({ ...this.newWishItem, checked: false }); this.newWishItem = { name: '', url: '', address: '', note: '', day: 'all' }; this.saveData(); } },
-            deleteWishItem(originalIdx) { if(confirm("刪除此項目？")) { this.wishlist.splice(originalIdx, 1); if (this.paginatedWishlist.length === 0 && this.wishlistPage > 1) { this.wishlistPage--; } this.saveData(); } },
+            deleteWishItem(originalIdx) { if(confirm("刪除項目？")) { this.wishlist.splice(originalIdx, 1); if (this.paginatedWishlist.length === 0 && this.wishlistPage > 1) { this.wishlistPage--; } this.saveData(); } },
             openWishEditModal(idx) { const item = this.wishlist[idx]; this.editingWishIdx = idx; this.editWishTemp = { ...item }; this.showWishEditModal = true; },
             saveWishItemEdit() { if(this.editingWishIdx !== null) { this.wishlist[this.editingWishIdx] = { ...this.editWishTemp }; this.showWishEditModal = false; this.saveData(); } },
             syncLocalOrder() { const savedOrder = JSON.parse(localStorage.getItem('myTripOrder') || '[]'); const currentIds = Object.keys(this.allTrips); let newOrder = savedOrder.filter(id => currentIds.includes(id)); const newIds = currentIds.filter(id => !newOrder.includes(id)); newOrder = [...newIds, ...newOrder]; this.localOrder = newOrder; localStorage.setItem('myTripOrder', JSON.stringify(this.localOrder)); },
@@ -489,7 +491,7 @@
             applyTheme(themeKey) { const styles = this.themePresets[themeKey] || this.themePresets['wood']; for (const [key, value] of Object.entries(styles)) { document.documentElement.style.setProperty(key, value); } },
             previewTheme(key) { this.editTemp.theme = key; this.applyTheme(key); },
             cancelSettings() { this.showSettingsModal = false; const originalTheme = this.allTrips[this.pendingTripId]?.theme || 'wood'; this.applyTheme(originalTheme); },
-            confirmDeleteTrip(tripId) { if(confirm("確定刪除旅程？")) { this.deleteTripBook(tripId); } },
+            confirmDeleteTrip(tripId) { if(confirm("確定要刪除整個旅程嗎？")) { this.deleteTripBook(tripId); } },
             deleteActivity(index) { if (confirm("確定刪除行程項目？")) { if (this.days[this.currentDayIndex] && this.days[this.currentDayIndex].activities) { this.days[this.currentDayIndex].activities.splice(index, 1); this.saveData(); this.$nextTick(() => this.updateMapRoute()); } } },
             openTripSettings(tripId) { this.pendingTripId = tripId; const trip = this.allTrips[tripId]; this.editTemp = { name: trip.tripName, theme: trip.theme || 'wood' }; this.showSettingsModal = true; this.applyTheme(this.editTemp.theme); },
             saveTripSettings() { if (this.allTrips[this.pendingTripId]) { this.allTrips[this.pendingTripId].tripName = this.editTemp.name; this.allTrips[this.pendingTripId].theme = this.editTemp.theme; if (hasFirebase) { db.ref('trips/' + this.pendingTripId).update({ tripName: this.editTemp.name, theme: this.editTemp.theme }); } else { localStorage.setItem('myTripBooks', JSON.stringify(this.allTrips)); } this.showSettingsModal = false; if (this.currentTripId === this.pendingTripId) { this.tripName = this.editTemp.name; this.applyTheme(this.editTemp.theme); } } },
@@ -514,9 +516,7 @@
             getCategoryIcon(cat) { const icons = { 'food': '🍴', 'transport': '🚅', 'ticket': '🎫', 'entertainment': '🎡', 'other': '📦' }; return icons[cat] || '📦'; },
             toggleInvolved(member) { const idx = this.newExpense.involved.indexOf(member); if (idx > -1) this.newExpense.involved.splice(idx, 1); else this.newExpense.involved.push(member); },
             addExpense() { if(this.newExpense.title && this.newExpense.amount && this.newExpense.payer) { if (this.splitMode === 'equal' && this.newExpense.involved.length === 0) { alert("至少需一人分擔"); return; } const now = new Date(); const dateStr = `${now.getFullYear()}/${(now.getMonth()+1).toString().padStart(2,'0')}/${now.getDate().toString().padStart(2,'0')} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`; let record = JSON.parse(JSON.stringify(this.newExpense)); record.date = dateStr; record.splitType = this.splitMode; if (this.splitMode === 'custom') record.customData = JSON.parse(JSON.stringify(this.customSplitAmounts)); this.expenses.push(record); this.newExpense.title = ''; this.newExpense.amount = ''; this.customSplitAmounts = {}; this.saveData(); } },
-            deleteExpense(idx) { if (confirm("確定刪除消費紀錄？")) { this.expenses.splice(idx, 1); this.saveData(); } },
-            addMember() { if(this.newMemberName.trim()) { const name = this.newMemberName.trim(); this.members.push(name); this.newExpense.involved.push(name); this.newMemberName=''; this.saveData(); } },
-            removeMember(idx) { if(confirm('移除成員？')) { const removedName = this.members[idx]; this.members = this.members.filter((_, i) => i !== idx); this.newExpense.involved = this.newExpense.involved.filter(m => m !== removedName); this.saveData(); } },
+            deleteExpense(idx) { if (confirm("確定刪除紀錄？")) { this.expenses.splice(idx, 1); this.saveData(); } },
             openGoogleMaps(place) { if (!place) return; window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place)}`, '_blank'); },
             getHour(timeStr) { return (timeStr && timeStr.includes(':')) ? timeStr.split(':')[0] : '10'; },
             getMinute(timeStr) { if(!timeStr || !timeStr.includes(':')) return '00'; let m = timeStr.split(':')[1]; return this.minuteOptions.includes(m) ? m : '00'; },
@@ -528,31 +528,14 @@
                 if (!document.getElementById("google-map")) return; 
                 try { 
                     this.directionsService = new google.maps.DirectionsService(); 
-                    this.directionsRenderer = new google.maps.DirectionsRenderer({ 
-                        map: this.map, 
-                        polylineOptions: { strokeColor: "#8b5e3c", strokeWeight: 4, strokeOpacity: 0.8 }, 
-                        suppressMarkers: false 
-                    }); 
-                    
-                    // 修正：調整 Style 以確保幾何圖形與道路正確顯示
+                    this.directionsRenderer = new google.maps.DirectionsRenderer({ map: this.map, polylineOptions: { strokeColor: "#8b5e3c", strokeWeight: 4, strokeOpacity: 0.8 }, suppressMarkers: false }); 
                     const cleanStyles = [
-                        { "featureType": "administrative", "elementType": "labels.text.fill", "stylers": [{ "color": "#444444" }] },
-                        { "featureType": "landscape", "elementType": "all", "stylers": [{ "color": "#f2f2f2" }] },
-                        { "featureType": "poi", "elementType": "all", "stylers": [{ "visibility": "off" }] },
-                        { "featureType": "road", "elementType": "all", "stylers": [{ "saturation": -100 }, { "lightness": 45 }] },
-                        { "featureType": "road.highway", "elementType": "all", "stylers": [{ "visibility": "simplified" }] },
-                        { "featureType": "road.arterial", "elementType": "labels.icon", "stylers": [{ "visibility": "off" }] },
-                        { "featureType": "transit", "elementType": "all", "stylers": [{ "visibility": "off" }] },
-                        { "featureType": "water", "elementType": "all", "stylers": [{ "color": "#c9d6d6" }, { "visibility": "on" }] }
+                        { "featureType": "landscape", "stylers": [{ "color": "#fdfcf8" }] },
+                        { "featureType": "road", "stylers": [{ "saturation": -100 }, { "lightness": 40 }] },
+                        { "featureType": "water", "stylers": [{ "color": "#c9d6d6" }] },
+                        { "featureType": "poi", "stylers": [{ "visibility": "off" }] }
                     ];
-
-                    this.map = new google.maps.Map(document.getElementById("google-map"), { 
-                        zoom: 12, 
-                        center: { lat: 35.6895, lng: 139.6917 }, 
-                        disableDefaultUI: true, 
-                        zoomControl: false, 
-                        styles: cleanStyles 
-                    }); 
+                    this.map = new google.maps.Map(document.getElementById("google-map"), { zoom: 12, center: { lat: 35.68, lng: 139.76 }, disableDefaultUI: true, zoomControl: false, styles: cleanStyles }); 
                     this.directionsRenderer.setMap(this.map); 
                     this.updateMapRoute(); 
                 } catch (e) { this.mapError = true; } 
@@ -565,7 +548,10 @@
                     if (this.markers) { this.markers.forEach(m => m.setMap(null)); }
                     this.markers = []; this.weatherData = null;
                     const activities = (this.days[this.currentDayIndex] || {}).activities || []; 
-                    const places = activities.filter(a => a.place && a.place.trim() !== "").map(a => a.place);
+                    
+                    // 優化：過濾掉空地點、找不到的地點、以及「交通」類型的地點
+                    const places = activities.filter(a => a.place && a.place.trim() !== "" && a.type !== 'transport').map(a => a.place);
+                    
                     if (places.length === 0) { this.directionsRenderer.setDirections({routes: []}); this.isMapUpdating = false; return; }
                     const geocoder = new google.maps.Geocoder();
                     let validLocations = []; 
@@ -596,7 +582,7 @@
             deleteDay() { if(confirm('刪除此日？')) { this.days.splice(this.currentDayIndex, 1); if(this.days.length === 0) this.days.push({activities:[], dailyNote: ''}); this.currentDayIndex = Math.max(0, this.currentDayIndex - 1); this.saveData(); this.$nextTick(() => this.updateMapRoute()); } },
             addActivity() { if (!this.days[this.currentDayIndex].activities) this.days[this.currentDayIndex].activities = []; this.days[this.currentDayIndex].activities.push({ time: '10:00', place: '', note: '', type: 'sightseeing', transportToNext: '', showTransportInput: false, link: '' }); this.saveData(); },
             initAutocomplete(index, event) { const input = event.target; if (input.dataset.autocompleteInit) return; try { const autocomplete = new google.maps.places.Autocomplete(input, { types: ['geocode', 'establishment'] }); autocomplete.addListener('place_changed', () => { const place = autocomplete.getPlace(); if (place.name || place.formatted_address) { this.days[this.currentDayIndex].activities[index].place = place.name || place.formatted_address; this.saveData(); this.updateMapRoute(); } }); input.dataset.autocompleteInit = 'true'; } catch (e) {} },
-            settleDebt(trans) { if (!confirm(`確定已結清 ${trans.from} 給 ${trans.to} 的 ${trans.amount} 元？`)) return; const now = new Date(); const record = { title: `結清: ${trans.from} → ${trans.to}`, amount: trans.amount, currency: this.displayCurrency, payer: trans.from, involved: [trans.to], category: 'other', splitType: 'equal', date: `${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${now.getMinutes()}` }; this.expenses.push(record); this.saveData(); },
+            settleDebt(trans) { if (!confirm(`確定結清 ${trans.from} 給 ${trans.to} 的 ${trans.amount} 元？`)) return; const now = new Date(); const record = { title: `結清: ${trans.from} → ${trans.to}`, amount: trans.amount, currency: this.displayCurrency, payer: trans.from, involved: [trans.to], category: 'other', splitType: 'equal', date: `${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${now.getMinutes()}` }; this.expenses.push(record); this.saveData(); },
             handleActivityLink(item) { if (item.link) { if (confirm("開啟連結？")) { window.open(item.link, '_blank'); } else { const newUrl = prompt("修改網址:", item.link); if (newUrl !== null) { item.link = newUrl.trim(); this.saveData(); } } } else { const url = prompt("輸入網址:", "https://"); if (url && url !== "https://") { item.link = url.trim(); this.saveData(); } } }
         }
     }).mount('#app');
