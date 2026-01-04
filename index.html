@@ -52,7 +52,6 @@
         .color-dot { width: 28px; height: 28px; border-radius: 50%; cursor: pointer; border: 2px solid var(--theme-light); transition: transform 0.2s; }
         .color-dot.active { border-color: var(--text-main); transform: scale(1.2); box-shadow: 0 0 8px rgba(0,0,0,0.1); }
         
-        /* 天數樣式修正 */
         .day-tab { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border-width: 2px; }
         .day-tab.active { transform: scale(1.05); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
         .color-picker-dot { width: 20px; height: 20px; border-radius: 4px; cursor: pointer; border: 1px solid rgba(0,0,0,0.1); flex-shrink: 0; transition: transform 0.1s; }
@@ -142,7 +141,7 @@
         </div>
     </div>
 
-    <!-- 天數管理 Modal (移動天數/顏色) -->
+    <!-- 天數管理 Modal -->
     <div v-if="showDayManager" class="modal-overlay">
         <div class="modal-card !max-w-[340px]">
             <h3 class="text-center font-bold text-[var(--theme-main)] mb-4 font-en tracking-widest text-sm">MANAGE DAYS</h3>
@@ -157,6 +156,7 @@
                     </div>
                     <div class="flex items-center bg-[var(--theme-light)]/30 rounded-lg px-1">
                         <button @click="moveDay(index, -1)" :disabled="index === 0" class="p-1.5 text-xs text-[var(--theme-main)] disabled:opacity-20">▲</button>
+                        <div class="w-px h-3 bg-[var(--theme-light)]"></div>
                         <button @click="moveDay(index, 1)" :disabled="index === days.length - 1" class="p-1.5 text-xs text-[var(--theme-main)] disabled:opacity-20">▼</button>
                     </div>
                 </div>
@@ -172,9 +172,13 @@
         <div v-if="showSidebar" class="fixed inset-0 z-50 flex">
             <div class="absolute inset-0 bg-black/30 backdrop-blur-sm" @click="showSidebar = false"></div>
             <div class="relative bg-[var(--bg-body)] w-72 h-full shadow-2xl flex flex-col border-r border-[var(--theme-light)]">
-                <div class="p-5 border-b border-[var(--theme-light)] flex justify-between items-center">
-                    <h2 class="text-lg font-bold text-[var(--theme-main)] tracking-widest">旅程書櫃</h2>
-                    <button @click="showSidebar = false" class="text-[var(--text-sub)]">✕</button>
+                <div class="p-5 border-b border-[var(--theme-light)]">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-lg font-bold text-[var(--theme-main)] tracking-widest">旅程書櫃</h2>
+                        <button @click="showSidebar = false" class="text-[var(--text-sub)]">✕</button>
+                    </div>
+                    <!-- 新增補充說明文字 -->
+                    <div class="text-[10px] text-[var(--text-sub)] font-normal mt-1 opacity-70">首頁為擺放最上層旅遊書</div>
                 </div>
                 <div class="flex-1 overflow-y-auto p-4 space-y-3 custom-scroll">
                     <div v-for="(trip, index) in sortedTrips" :key="trip.id" 
@@ -235,7 +239,7 @@
                 <div class="flex-1 min-w-0">
                     <div class="overflow-x-auto whitespace-nowrap custom-scroll flex gap-2 pb-2 px-1">
                         <div v-for="(day, index) in days" :key="index" class="shrink-0 cursor-pointer" @click="changeDay(index)">
-                            <!-- 天數顏色與樣式反應需求修正 -->
+                            <!-- 天數顏色邏輯 -->
                             <div :style="{ 
                                     backgroundColor: currentDayIndex === index ? (day.color || 'var(--theme-main)') : 'var(--bg-card)', 
                                     color: currentDayIndex === index ? '#fff' : (day.color || 'var(--text-sub)'),
@@ -314,20 +318,7 @@
                             <button @click.stop="moveActivity(index, 1)" class="h-1/2 w-full flex items-center justify-center text-[var(--theme-accent)] hover:text-[var(--theme-main)] hover:bg-[var(--theme-light)]/50 transition disabled:opacity-20" :disabled="index === (days[currentDayIndex].activities.length - 1)">▼</button>
                         </div>
                     </div>
-                    <div v-if="index < days[currentDayIndex].activities.length - 1" class="ml-12 my-0.5 flex flex-col items-start border-l-2 border-dotted border-[var(--theme-light)] pl-4 min-h-[16px] transition-all">
-                        <button v-if="!item.transportToNext && !item.showTransportInput" @click="item.showTransportInput = true" class="text-[9px] font-bold text-[var(--theme-accent)] hover:text-[var(--theme-main)] transition-colors py-0.5 opacity-40 hover:opacity-100 flex items-center gap-1"><span>+</span> 接駁</button>
-                        <div v-else class="w-full flex items-start gap-2 animate-fade-in pr-4 pb-1">
-                            <span class="text-xs grayscale opacity-70 shrink-0 mt-1">🚅</span>
-                            <textarea v-model="item.transportToNext" @change="saveData" rows="2" placeholder="交通說明..." class="flex-1 text-[10px] bg-transparent border-b border-[var(--theme-light)] outline-none focus:border-[var(--theme-accent)] text-[var(--text-sub)] placeholder-[var(--theme-light)] py-1 resize-none leading-normal"></textarea>
-                            <button @click="item.transportToNext = ''; item.showTransportInput = false; saveData()" class="text-[var(--text-sub)] hover:text-[var(--danger)] text-[10px] px-1 transition-colors mt-1">✕</button>
-                        </div>
-                    </div>
                 </template>
-            </div>
-
-            <div v-if="days[currentDayIndex]" class="mt-8 pt-4 border-t border-[var(--theme-light)] bg-[var(--theme-light)]/10 rounded-xl p-4">
-                <div class="flex items-center gap-2 mb-2 text-[10px] font-bold text-[var(--text-sub)] tracking-widest uppercase"><span>📋 Daily Notes</span></div>
-                <textarea v-model="days[currentDayIndex].dailyNote" @change="saveData" @input="autoGrow($event.target)" placeholder="今日的重要提醒或心得..." class="w-full text-xs text-[var(--text-main)] bg-transparent outline-none resize-y leading-relaxed min-h-[60px] custom-scroll"></textarea>
             </div>
             <button @click="addActivity" class="w-full py-3 border border-dashed border-[var(--theme-accent)] text-[var(--theme-accent)] rounded-xl text-xs hover:border-[var(--theme-main)] hover:text-[var(--theme-main)] transition tracking-widest mt-2 bg-[var(--bg-card)]/50">+ ADD ITEM</button>
         </div>
@@ -492,7 +483,7 @@
     const firebaseConfig = { apiKey: "AIzaSyACnUlpKnoImSKhnmEDLAwKfuUOXAKijrU", authDomain: "mytrip-cf4ce.firebaseapp.com", databaseURL: "https://mytrip-cf4ce-default-rtdb.asia-southeast1.firebasedatabase.app", projectId: "mytrip-cf4ce", storageBucket: "mytrip-cf4ce.firebasestorage.app", messagingSenderId: "336541146264", appId: "1:336541146264:web:484f98b025c151a1e244ed" };
     const hasFirebase = true; 
     let db = null;
-    if (hasFirebase) { try { firebase.initializeApp(firebaseConfig); db = firebase.database(); } catch(e) { console.error("FB Init Fail"); } }
+    if (hasFirebase) { try { firebase.initializeApp(firebaseConfig); db = firebase.database(); } catch(e) {} }
 
     createApp({
         data() {
@@ -545,14 +536,18 @@
             sortedTrips() { 
                 if (!this.allTrips || Object.keys(this.allTrips).length === 0) return []; 
                 let trips = Object.keys(this.allTrips).map(key => ({ id: key, ...this.allTrips[key] })); 
-                trips.sort((a, b) => { const indexA = this.localOrder.indexOf(a.id); const indexB = this.localOrder.indexOf(b.id); return (indexA === -1 ? 999 : indexA) - (indexB === -1 ? 999 : indexB); }); 
+                trips.sort((a, b) => { 
+                    const indexA = this.localOrder.indexOf(a.id); 
+                    const indexB = this.localOrder.indexOf(b.id); 
+                    return (indexA === -1 ? 999 : indexA) - (indexB === -1 ? 999 : indexB); 
+                }); 
                 return trips; 
             },
             categoryAnalysis() { return this.calcAnalysis(); },
             groupedExpenses() { const groups = {}; this.expenses.forEach((exp, index) => { const dateKey = exp.date ? exp.date.split(' ')[0] : '其他'; if (!groups[dateKey]) { groups[dateKey] = { items: [] }; } groups[dateKey].items.push({ data: exp, originalIndex: index }); }); return Object.keys(groups).sort((a, b) => b.localeCompare(a)).reduce((obj, key) => { obj[key] = groups[key]; return obj; }, {}); },
             settlementPlan() { if (!this.members.length) return []; let balances = {}; this.members.forEach(m => balances[m] = 0); this.expenses.forEach(exp => { let rate = this.rates[exp.currency] || 1; let valInTWD = exp.amount * rate; if (balances[exp.payer] !== undefined) balances[exp.payer] += valInTWD; if (exp.splitType === 'custom' && exp.customData) { for (let m in exp.customData) { if (this.members.includes(m)) { let share = (exp.customData[m] || 0) * rate; if (balances[m] !== undefined) balances[m] -= share; } } } else { let involved = (exp.involved || []).filter(m => this.members.includes(m)); if (involved.length > 0) { let split = valInTWD / involved.length; involved.forEach(m => { if (balances[m] !== undefined) balances[m] -= split; }); } } }); let debtors = []; let creditors = []; for (const [name, amount] of Object.entries(balances)) { if (amount < -1) debtors.push({ name, amount: amount }); else if (amount > 1) creditors.push({ name, amount: amount }); } debtors.sort((a, b) => a.amount - b.amount); creditors.sort((a, b) => b.amount - a.amount); let transactions = []; let i = 0, j = 0; while (i < debtors.length && j < creditors.length) { let debtor = debtors[i], creditor = creditors[j]; let amount = Math.min(Math.abs(debtor.amount), creditor.amount); let targetRate = this.rates[this.displayCurrency] || 1; transactions.push({ from: debtor.name, to: creditor.name, amount: Math.round(amount / targetRate) }); debtor.amount += amount; creditor.amount -= amount; if (Math.abs(debtor.amount) < 1) i++; if (creditor.amount < 1) j++; } return transactions; }
         },
-        mounted() { this.loadTripList(); setTimeout(() => { if(this.isLoading) this.isLoading = false; }, 5000); },
+        mounted() { this.loadTripList(); window.gm_authFailure = () => { this.mapError = true; }; setTimeout(() => { if(this.isLoading) this.isLoading = false; }, 5000); },
         methods: {
             autoGrow(element) { element.style.height = "auto"; element.style.height = (element.scrollHeight) + "px"; },
             toggleDateGroup(dateKey) { this.collapsedDates[dateKey] = !this.collapsedDates[dateKey]; },
@@ -573,7 +568,15 @@
             openWishEditModal(idx) { const item = this.wishlist[idx]; this.editingWishIdx = idx; this.editWishTemp = { ...item }; this.showWishEditModal = true; },
             saveWishItemEdit() { if(this.editingWishIdx !== null) { this.wishlist[this.editingWishIdx] = { ...this.editWishTemp }; this.showWishEditModal = false; this.saveData(); } },
             syncLocalOrder() { const savedOrder = JSON.parse(localStorage.getItem('myTripOrder') || '[]'); const currentIds = Object.keys(this.allTrips); let newOrder = savedOrder.filter(id => currentIds.includes(id)); const newIds = currentIds.filter(id => !newOrder.includes(id)); this.localOrder = [...newIds, ...newOrder]; localStorage.setItem('myTripOrder', JSON.stringify(this.localOrder)); },
-            moveTripBook(index, direction) { const currentList = this.sortedTrips.map(t => t.id); const targetIndex = index + direction; if (targetIndex >= 0 && targetIndex < currentList.length) { [currentList[index], currentList[targetIndex]] = [currentList[targetIndex], currentList[index]]; this.localOrder = currentList; localStorage.setItem('myTripOrder', JSON.stringify(this.localOrder)); } },
+            moveTripBook(index, direction) { 
+                const currentList = this.sortedTrips.map(t => t.id); 
+                const targetIndex = index + direction; 
+                if (targetIndex >= 0 && targetIndex < currentList.length) { 
+                    [currentList[index], currentList[targetIndex]] = [currentList[targetIndex], currentList[index]]; 
+                    this.localOrder = currentList; 
+                    localStorage.setItem('myTripOrder', JSON.stringify(this.localOrder)); 
+                } 
+            },
             applyTheme(themeKey) { const styles = this.themePresets[themeKey] || this.themePresets['wood']; for (const [key, value] of Object.entries(styles)) { document.documentElement.style.setProperty(key, value); } },
             previewTheme(key) { this.editTemp.theme = key; this.applyTheme(key); },
             cancelSettings() { this.showSettingsModal = false; const originalTheme = this.allTrips[this.pendingTripId]?.theme || 'wood'; this.applyTheme(originalTheme); },
@@ -603,15 +606,20 @@
                 if (hasFirebase && db) {
                     db.ref('trips').on('value', snapshot => {
                         this.allTrips = snapshot.val() || {};
-                        const keys = Object.keys(this.allTrips);
-                        if (keys.length > 0) { if (!this.currentTripId) this.openTrip(this.sortedTrips[0].id); } 
-                        else { this.createNewTrip(); }
+                        this.syncLocalOrder(); // 先同步排序
+                        if (Object.keys(this.allTrips).length > 0) { 
+                            if (!this.currentTripId) {
+                                // 修正：預設讀取排序第一位的行程
+                                const topTripId = this.sortedTrips[0].id;
+                                this.openTrip(topTripId);
+                            } 
+                        } else { this.createNewTrip(); }
                     }, err => { this.isLoading = false; });
                 } else {
                     const saved = localStorage.getItem('myTripBooks');
                     this.allTrips = saved ? JSON.parse(saved) : {};
-                    const keys = Object.keys(this.allTrips);
-                    if (keys.length > 0) this.openTrip(this.sortedTrips[0].id); else this.createNewTrip();
+                    this.syncLocalOrder();
+                    if (Object.keys(this.allTrips).length > 0) this.openTrip(this.sortedTrips[0].id); else this.createNewTrip();
                 }
             },
             createNewTrip() {
@@ -628,7 +636,7 @@
                     this.members = d.members || ['我', '旅伴']; this.expenses = d.expenses || []; this.wishlist = d.wishlist || []; this.packingList = d.packingList || {}; this.externalLinks = d.externalLinks || [];
                     this.startDate = d.startDate || ''; this.applyTheme(d.theme || 'wood');
                     this.isLoading = false; this.showSidebar = false;
-                    this.$nextTick(() => { if(this.currentTab === 'schedule') this.retryInitMap(0); });
+                    this.$nextTick(() => { if(this.currentTab === 'schedule') this.retryInitMap(0); if(this.currentTab === 'expenses') this.renderChart(); });
                 } else { this.isLoading = false; }
             },
             deleteTripBook(tripId) { if(hasFirebase) db.ref('trips/' + tripId).remove(); const temp = {...this.allTrips}; delete temp[tripId]; this.allTrips = temp; if(this.currentTripId === tripId) this.loadTripList(); },
