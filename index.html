@@ -51,6 +51,12 @@
         
         .color-dot { width: 28px; height: 28px; border-radius: 50%; cursor: pointer; border: 2px solid var(--theme-light); transition: transform 0.2s; }
         .color-dot.active { border-color: var(--text-main); transform: scale(1.2); box-shadow: 0 0 8px rgba(0,0,0,0.1); }
+        
+        /* 天數樣式修正 */
+        .day-tab { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border-width: 2px; }
+        .day-tab.active { transform: scale(1.05); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        .color-picker-dot { width: 20px; height: 20px; border-radius: 4px; cursor: pointer; border: 1px solid rgba(0,0,0,0.1); flex-shrink: 0; transition: transform 0.1s; }
+
         .map-error-msg { position: absolute; inset: 0; background: #f8d7da; color: #721c24; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; text-align: center; font-size: 12px; z-index: 10; border-radius: 12px; }
         
         .custom-checkbox { appearance: none; -webkit-appearance: none; width: 20px; height: 20px; border: 2px solid var(--theme-light); border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; background-color: transparent; }
@@ -81,7 +87,7 @@
 </head>
 <body>
 
-<div id="app" :style="currentThemeStyles" class="max-w-md mx-auto bg-[var(--bg-body)] min-h-screen shadow-2xl shadow-gray-200/50 relative pb-12 border-x border-[var(--theme-light)] overflow-hidden font-sans text-[var(--text-main)] transition-colors duration-500">
+<div id="app" :style="currentThemeStyles" class="max-w-md mx-auto bg-[var(--bg-body)] min-h-screen shadow-2xl relative pb-12 border-x border-[var(--theme-light)] overflow-hidden font-sans text-[var(--text-main)] transition-colors duration-500">
     
     <div v-if="isLoading" class="loading-overlay">
         <div class="loading-spinner"></div>
@@ -130,8 +136,33 @@
                 <div v-for="(theme, key) in themePresets" :key="key" class="color-dot" :class="{ active: editTemp.theme === key }" :style="{ backgroundColor: theme['--theme-main'] }" @click="previewTheme(key)" :title="key"></div>
             </div>
             <div class="flex gap-2">
-                <button @click="cancelSettings" class="flex-1 py-2 text-xs text-[var(--text-sub)] hover:bg-[var(--theme-light)] rounded-lg transition">取消</button>
+                <button @click="showSettingsModal = false" class="flex-1 py-2 text-xs text-[var(--text-sub)] hover:bg-[var(--theme-light)] rounded-lg transition">取消</button>
                 <button @click="saveTripSettings" class="flex-1 py-2 text-xs text-white bg-[var(--theme-main)] hover:bg-[var(--theme-accent)] rounded-lg font-bold transition">儲存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 天數管理 Modal (移動天數/顏色) -->
+    <div v-if="showDayManager" class="modal-overlay">
+        <div class="modal-card !max-w-[340px]">
+            <h3 class="text-center font-bold text-[var(--theme-main)] mb-4 font-en tracking-widest text-sm">MANAGE DAYS</h3>
+            <div class="max-h-[350px] overflow-y-auto space-y-2 custom-scroll pr-2">
+                <div v-for="(day, index) in days" :key="index" class="flex items-center gap-2 bg-[var(--bg-body)] p-2 rounded-xl border border-[var(--theme-light)]">
+                    <div class="text-[10px] font-bold w-12 text-[var(--text-sub)]">Day {{ index+1 }}</div>
+                    <div class="flex gap-1 flex-1 overflow-x-auto scrollbar-hide">
+                        <div v-for="c in dayColorPresets" :key="c" @click="day.color = c; saveData()" 
+                             :style="{ backgroundColor: c }" 
+                             :class="['color-picker-dot', (day.color === c || (!day.color && c === '#8b5e3c')) ? 'ring-2 ring-offset-1 ring-gray-400 scale-110' : 'opacity-60']">
+                        </div>
+                    </div>
+                    <div class="flex items-center bg-[var(--theme-light)]/30 rounded-lg px-1">
+                        <button @click="moveDay(index, -1)" :disabled="index === 0" class="p-1.5 text-xs text-[var(--theme-main)] disabled:opacity-20">▲</button>
+                        <button @click="moveDay(index, 1)" :disabled="index === days.length - 1" class="p-1.5 text-xs text-[var(--theme-main)] disabled:opacity-20">▼</button>
+                    </div>
+                </div>
+            </div>
+            <div class="flex gap-2 mt-4">
+                <button @click="showDayManager = false" class="flex-1 py-2 bg-[var(--theme-main)] text-white rounded-lg font-bold text-xs shadow-md">完成</button>
             </div>
         </div>
     </div>
@@ -204,14 +235,23 @@
                 <div class="flex-1 min-w-0">
                     <div class="overflow-x-auto whitespace-nowrap custom-scroll flex gap-2 pb-2 px-1">
                         <div v-for="(day, index) in days" :key="index" class="shrink-0 cursor-pointer" @click="changeDay(index)">
-                            <div :class="{'bg-[var(--theme-main)] text-white shadow-md': currentDayIndex === index, 'bg-[var(--bg-card)] text-[var(--text-sub)] border border-[var(--theme-light)]': currentDayIndex !== index}" class="px-3 py-1.5 rounded-lg flex flex-col items-center justify-center transition-all min-w-[70px]">
+                            <!-- 天數顏色與樣式反應需求修正 -->
+                            <div :style="{ 
+                                    backgroundColor: currentDayIndex === index ? (day.color || 'var(--theme-main)') : 'var(--bg-card)', 
+                                    color: currentDayIndex === index ? '#fff' : (day.color || 'var(--text-sub)'),
+                                    borderColor: currentDayIndex === index ? 'transparent' : (day.color || 'var(--theme-light)') 
+                                 }" 
+                                 :class="['day-tab px-3 py-1.5 rounded-lg flex flex-col items-center justify-center min-w-[70px] border', currentDayIndex === index ? 'active shadow-md' : '']">
                                 <span class="text-xs font-en font-bold pointer-events-none">Day {{ index + 1 }}</span>
                                 <span class="text-[9px] font-en opacity-80 leading-none mt-0.5 pointer-events-none">{{ getDateLabel(index) }}</span>
                             </div>
                         </div>
                     </div>
                 </div>
-                <button @click="addDay" class="shrink-0 w-8 h-8 mb-2 flex items-center justify-center border-2 border-dashed border-[var(--theme-accent)] text-[var(--theme-main)] rounded-lg text-sm hover:bg-[var(--theme-light)] transition bg-white/50">+</button>
+                <div class="flex gap-1 mb-2">
+                    <button @click="showDayManager = true" class="shrink-0 w-8 h-8 flex items-center justify-center bg-[var(--theme-light)]/50 text-[var(--theme-main)] rounded-lg text-sm hover:bg-[var(--theme-light)] transition">⚙️</button>
+                    <button @click="addDay" class="shrink-0 w-8 h-8 flex items-center justify-center border-2 border-dashed border-[var(--theme-accent)] text-[var(--theme-main)] rounded-lg text-sm hover:bg-[var(--theme-light)] transition bg-white/50">+</button>
+                </div>
             </div>
         </div>
     </div>
@@ -238,8 +278,8 @@
                 <button @click="deleteDay" class="text-[10px] text-[var(--text-sub)] hover:text-[var(--danger)] transition">DELETE DAY</button>
             </div>
 
-            <div class="space-y-2">
-                <template v-for="(item, index) in (days[currentDayIndex] ? days[currentDayIndex].activities : [])" :key="index">
+            <div v-if="days[currentDayIndex]" class="space-y-2">
+                <template v-for="(item, index) in days[currentDayIndex].activities" :key="index">
                     <div class="flex items-stretch gap-0 group relative bg-transparent hover:bg-[var(--bg-card)] rounded-lg transition overflow-hidden">
                         <div class="flex-1 flex items-start gap-2 py-2 pl-2 min-w-0">
                             <div class="flex flex-col items-center justify-start gap-1 w-20 flex-shrink-0 pt-1">
@@ -285,7 +325,7 @@
                 </template>
             </div>
 
-            <div class="mt-8 pt-4 border-t border-[var(--theme-light)] bg-[var(--theme-light)]/10 rounded-xl p-4">
+            <div v-if="days[currentDayIndex]" class="mt-8 pt-4 border-t border-[var(--theme-light)] bg-[var(--theme-light)]/10 rounded-xl p-4">
                 <div class="flex items-center gap-2 mb-2 text-[10px] font-bold text-[var(--text-sub)] tracking-widest uppercase"><span>📋 Daily Notes</span></div>
                 <textarea v-model="days[currentDayIndex].dailyNote" @change="saveData" @input="autoGrow($event.target)" placeholder="今日的重要提醒或心得..." class="w-full text-xs text-[var(--text-main)] bg-transparent outline-none resize-y leading-relaxed min-h-[60px] custom-scroll"></textarea>
             </div>
@@ -452,7 +492,7 @@
     const firebaseConfig = { apiKey: "AIzaSyACnUlpKnoImSKhnmEDLAwKfuUOXAKijrU", authDomain: "mytrip-cf4ce.firebaseapp.com", databaseURL: "https://mytrip-cf4ce-default-rtdb.asia-southeast1.firebasedatabase.app", projectId: "mytrip-cf4ce", storageBucket: "mytrip-cf4ce.firebasestorage.app", messagingSenderId: "336541146264", appId: "1:336541146264:web:484f98b025c151a1e244ed" };
     const hasFirebase = true; 
     let db = null;
-    if (hasFirebase) { try { firebase.initializeApp(firebaseConfig); db = firebase.database(); } catch(e) {} }
+    if (hasFirebase) { try { firebase.initializeApp(firebaseConfig); db = firebase.database(); } catch(e) { console.error("FB Init Fail"); } }
 
     createApp({
         data() {
@@ -460,7 +500,7 @@
                 isLoading: true, showSidebar: false, currentTab: 'schedule', 
                 tabs: [{id:'schedule', name:'行程表'}, {id:'expenses', name:'消費紀錄'}, {id:'wishlist', name:'購物美食'}, {id:'links', name:'常用連結'}, {id:'packing', name:'行李清單'}],
                 tripName: '', statusMessage: 'Connecting...', currentDayIndex: 0, startDate: '',
-                days: [{ activities: [{ time: '10:00', place: '', type: 'transport', note: '', transportToNext: '', showTransportInput: false, link: '' }], dailyNote: '' }],
+                days: [{ activities: [], dailyNote: '', color: '' }],
                 members: ['我', '旅伴'], newMemberName: '',
                 showRates: false, displayCurrency: 'TWD', analysisCurrency: 'TWD',
                 analysisFilter: 'all', rates: { TWD: 1, JPY: 0.22, USD: 32.5, EUR: 35.0 },
@@ -477,6 +517,8 @@
                 minuteOptions: Array.from({length: 12}, (_, i) => (i * 5).toString().padStart(2, '0')),
                 expandedHistoryIndices: [], allTrips: {}, currentTripId: null,
                 showSettingsModal: false, editTemp: { name: '', theme: 'wood' }, pendingTripId: null,
+                showDayManager: false, 
+                dayColorPresets: ['#8b5e3c', '#d65d7a', '#4a7a8c', '#5e7e5e', '#b08d73', '#7ca5b8', '#d68c8c', '#9ea6b3'],
                 weatherData: null, chartInstance: null, isMapUpdating: false, localOrder: [],
                 themePresets: { wood: { '--bg-body': '#fdfcf8', '--bg-card': '#ffffff', '--theme-main': '#8b5e3c', '--theme-light': '#f0e6dd', '--theme-accent': '#b08d73', '--text-main': '#4a4036', '--text-sub': '#968c83', '--danger': '#d68c8c', '--link-blue': '#7ca5b8' }, sakura: { '--bg-body': '#fff5f7', '--bg-card': '#ffffff', '--theme-main': '#d65d7a', '--theme-light': '#ffe4e8', '--theme-accent': '#f4a6b5', '--text-main': '#5c3a41', '--text-sub': '#9e7e85', '--danger': '#ff6b6b', '--link-blue': '#7ca5b8' }, ocean: { '--bg-body': '#f0f8ff', '--bg-card': '#ffffff', '--theme-main': '#4a7a8c', '--theme-light': '#dcedf5', '--theme-accent': '#7fb0c2', '--text-main': '#2c3e50', '--text-sub': '#7f8c8d', '--danger': '#e74c3c', '--link-blue': '#7ca5b8' }, matcha: { '--bg-body': '#f6f9f6', '--bg-card': '#ffffff', '--theme-main': '#5e7e5e', '--theme-light': '#ddeedd', '--theme-accent': '#8daf8d', '--text-main': '#2d382d', '--text-sub': '#889988', '--danger': '#c45c5c', '--link-blue': '#7ca5b8' }, night: { '--bg-body': '#1a1a1a', '--bg-card': '#2a2a2a', '--theme-main': '#e0e0e0', '--theme-light': '#444444', '--theme-accent': '#666666', '--text-main': '#e0e0e0', '--text-sub': '#999999', '--danger': '#ff5555', '--link-blue': '#7ca5b8' } }
             }
@@ -500,50 +542,45 @@
             currentPackingList() { return this.packingList[this.currentPackingMember] || []; },
             packingProgress() { const list = this.currentPackingList; if (list.length === 0) return 0; const checkedCount = list.filter(i => i.checked).length; return Math.round((checkedCount / list.length) * 100); },
             currentThemeStyles() { const trip = this.allTrips[this.currentTripId]; const themeKey = (trip && trip.theme) ? trip.theme : 'wood'; return this.themePresets[themeKey] || this.themePresets['wood']; },
-            sortedTrips() { if (!this.allTrips) return []; let trips = Object.keys(this.allTrips).map(key => ({ id: key, ...this.allTrips[key] })); trips.sort((a, b) => { const indexA = this.localOrder.indexOf(a.id); const indexB = this.localOrder.indexOf(b.id); const valA = indexA === -1 ? -999 : indexA; const valB = indexB === -1 ? -999 : indexB; return valA - valB; }); return trips; },
+            sortedTrips() { 
+                if (!this.allTrips || Object.keys(this.allTrips).length === 0) return []; 
+                let trips = Object.keys(this.allTrips).map(key => ({ id: key, ...this.allTrips[key] })); 
+                trips.sort((a, b) => { const indexA = this.localOrder.indexOf(a.id); const indexB = this.localOrder.indexOf(b.id); return (indexA === -1 ? 999 : indexA) - (indexB === -1 ? 999 : indexB); }); 
+                return trips; 
+            },
             categoryAnalysis() { return this.calcAnalysis(); },
             groupedExpenses() { const groups = {}; this.expenses.forEach((exp, index) => { const dateKey = exp.date ? exp.date.split(' ')[0] : '其他'; if (!groups[dateKey]) { groups[dateKey] = { items: [] }; } groups[dateKey].items.push({ data: exp, originalIndex: index }); }); return Object.keys(groups).sort((a, b) => b.localeCompare(a)).reduce((obj, key) => { obj[key] = groups[key]; return obj; }, {}); },
-            settlementPlan() { if (!this.members.length) return []; let balances = {}; this.members.forEach(m => balances[m] = 0); this.expenses.forEach(exp => { let rate = this.rates[exp.currency] || 1; let valInTWD = exp.amount * rate; if (balances[exp.payer] !== undefined) balances[exp.payer] += valInTWD; if (exp.splitType === 'custom' && exp.customData) { for (let m in exp.customData) { if (this.members.includes(m)) { let share = (exp.customData[m] || 0) * rate; if (balances[m] !== undefined) balances[m] -= share; } } } else { let involved = (exp.involved || []).filter(m => this.members.includes(m)); if (involved.length > 0) { let split = valInTWD / involved.length; involved.forEach(m => { if (balances[m] !== undefined) balances[m] -= split; }); } } }); let debtors = []; let creditors = []; for (const [name, amount] of Object.entries(balances)) { if (amount < -1) debtors.push({ name, amount: amount }); else if (amount > 1) creditors.push({ name, amount: amount }); } debtors.sort((a, b) => a.amount - b.amount); creditors.sort((a, b) => b.amount - a.amount); let transactions = []; let i = 0; let j = 0; while (i < debtors.length && j < creditors.length) { let debtor = debtors[i]; let creditor = creditors[j]; let amount = Math.min(Math.abs(debtor.amount), creditor.amount); let targetRate = this.rates[this.displayCurrency] || 1; transactions.push({ from: debtor.name, to: creditor.name, amount: Math.round(amount / targetRate) }); debtor.amount += amount; creditor.amount -= amount; if (Math.abs(debtor.amount) < 1) i++; if (creditor.amount < 1) j++; } return transactions; }
+            settlementPlan() { if (!this.members.length) return []; let balances = {}; this.members.forEach(m => balances[m] = 0); this.expenses.forEach(exp => { let rate = this.rates[exp.currency] || 1; let valInTWD = exp.amount * rate; if (balances[exp.payer] !== undefined) balances[exp.payer] += valInTWD; if (exp.splitType === 'custom' && exp.customData) { for (let m in exp.customData) { if (this.members.includes(m)) { let share = (exp.customData[m] || 0) * rate; if (balances[m] !== undefined) balances[m] -= share; } } } else { let involved = (exp.involved || []).filter(m => this.members.includes(m)); if (involved.length > 0) { let split = valInTWD / involved.length; involved.forEach(m => { if (balances[m] !== undefined) balances[m] -= split; }); } } }); let debtors = []; let creditors = []; for (const [name, amount] of Object.entries(balances)) { if (amount < -1) debtors.push({ name, amount: amount }); else if (amount > 1) creditors.push({ name, amount: amount }); } debtors.sort((a, b) => a.amount - b.amount); creditors.sort((a, b) => b.amount - a.amount); let transactions = []; let i = 0, j = 0; while (i < debtors.length && j < creditors.length) { let debtor = debtors[i], creditor = creditors[j]; let amount = Math.min(Math.abs(debtor.amount), creditor.amount); let targetRate = this.rates[this.displayCurrency] || 1; transactions.push({ from: debtor.name, to: creditor.name, amount: Math.round(amount / targetRate) }); debtor.amount += amount; creditor.amount -= amount; if (Math.abs(debtor.amount) < 1) i++; if (creditor.amount < 1) j++; } return transactions; }
         },
-        mounted() { this.loadTripList(); window.gm_authFailure = () => { this.mapError = true; }; setTimeout(() => { if(this.isLoading) this.isLoading = false; }, 5000); },
+        mounted() { this.loadTripList(); setTimeout(() => { if(this.isLoading) this.isLoading = false; }, 5000); },
         methods: {
             autoGrow(element) { element.style.height = "auto"; element.style.height = (element.scrollHeight) + "px"; },
             toggleDateGroup(dateKey) { this.collapsedDates[dateKey] = !this.collapsedDates[dateKey]; },
             prevPage() { if (this.wishlistPage > 1) this.wishlistPage--; },
             nextPage() { if (this.wishlistPage < this.totalWishlistPages) this.wishlistPage++; },
-            
-            // 補全：行李清單建議邏輯
             loadDefaultPackingItems() {
                 const defaults = ["護照/證件", "外幣/信用卡", "換洗衣物", "充電器/轉接頭", "盥洗用品", "常用藥品", "雨具", "網卡/Wifi機"];
                 if (!this.packingList[this.currentPackingMember]) this.packingList[this.currentPackingMember] = [];
-                defaults.forEach(name => {
-                    if (!this.packingList[this.currentPackingMember].some(i => i.name === name)) {
-                        this.packingList[this.currentPackingMember].push({ name, checked: false });
-                    }
-                });
+                defaults.forEach(name => { if (!this.packingList[this.currentPackingMember].some(i => i.name === name)) { this.packingList[this.currentPackingMember].push({ name, checked: false }); } });
                 this.saveData();
             },
             addPackingItem() { if(this.newPackingItem.trim()) { if (!this.packingList[this.currentPackingMember]) this.packingList[this.currentPackingMember] = []; this.packingList[this.currentPackingMember].push({ name: this.newPackingItem.trim(), checked: false }); this.newPackingItem = ''; this.saveData(); } },
             deletePackingItem(idx) { if(confirm("刪除物品？")) { this.packingList[this.currentPackingMember].splice(idx, 1); this.saveData(); } },
-            
-            // 補全：連結管理邏輯
             addLink() { if(this.newLink.title && this.newLink.url) { this.externalLinks.push({ ...this.newLink }); this.newLink = { title: '', url: '' }; this.saveData(); } else { alert("請輸入完整標題與網址"); } },
             deleteLink(idx) { if(confirm("刪除此連結？")) { this.externalLinks.splice(idx, 1); this.saveData(); } },
-            
             addWishItem() { if (this.newWishItem.name) { this.wishlist.push({ ...this.newWishItem, checked: false }); this.newWishItem = { name: '', url: '', address: '', note: '', day: 'all' }; this.saveData(); } },
             deleteWishItem(originalIdx) { if(confirm("刪除項目？")) { this.wishlist.splice(originalIdx, 1); if (this.paginatedWishlist.length === 0 && this.wishlistPage > 1) { this.wishlistPage--; } this.saveData(); } },
             openWishEditModal(idx) { const item = this.wishlist[idx]; this.editingWishIdx = idx; this.editWishTemp = { ...item }; this.showWishEditModal = true; },
             saveWishItemEdit() { if(this.editingWishIdx !== null) { this.wishlist[this.editingWishIdx] = { ...this.editWishTemp }; this.showWishEditModal = false; this.saveData(); } },
-            syncLocalOrder() { const savedOrder = JSON.parse(localStorage.getItem('myTripOrder') || '[]'); const currentIds = Object.keys(this.allTrips); let newOrder = savedOrder.filter(id => currentIds.includes(id)); const newIds = currentIds.filter(id => !newOrder.includes(id)); newOrder = [...newIds, ...newOrder]; this.localOrder = newOrder; localStorage.setItem('myTripOrder', JSON.stringify(this.localOrder)); },
-            moveTripBook(index, direction) { const currentList = this.sortedTrips.map(t => t.id); const targetIndex = index + direction; if (targetIndex >= 0 && targetIndex < currentList.length) { const temp = currentList[index]; currentList[index] = currentList[targetIndex]; currentList[targetIndex] = temp; this.localOrder = currentList; localStorage.setItem('myTripOrder', JSON.stringify(this.localOrder)); } },
+            syncLocalOrder() { const savedOrder = JSON.parse(localStorage.getItem('myTripOrder') || '[]'); const currentIds = Object.keys(this.allTrips); let newOrder = savedOrder.filter(id => currentIds.includes(id)); const newIds = currentIds.filter(id => !newOrder.includes(id)); this.localOrder = [...newIds, ...newOrder]; localStorage.setItem('myTripOrder', JSON.stringify(this.localOrder)); },
+            moveTripBook(index, direction) { const currentList = this.sortedTrips.map(t => t.id); const targetIndex = index + direction; if (targetIndex >= 0 && targetIndex < currentList.length) { [currentList[index], currentList[targetIndex]] = [currentList[targetIndex], currentList[index]]; this.localOrder = currentList; localStorage.setItem('myTripOrder', JSON.stringify(this.localOrder)); } },
             applyTheme(themeKey) { const styles = this.themePresets[themeKey] || this.themePresets['wood']; for (const [key, value] of Object.entries(styles)) { document.documentElement.style.setProperty(key, value); } },
             previewTheme(key) { this.editTemp.theme = key; this.applyTheme(key); },
             cancelSettings() { this.showSettingsModal = false; const originalTheme = this.allTrips[this.pendingTripId]?.theme || 'wood'; this.applyTheme(originalTheme); },
             confirmDeleteTrip(tripId) { if(confirm("確定要刪除整個旅程嗎？")) { this.deleteTripBook(tripId); } },
             deleteActivity(index) { if (confirm("確定刪除行程項目？")) { if (this.days[this.currentDayIndex] && this.days[this.currentDayIndex].activities) { this.days[this.currentDayIndex].activities.splice(index, 1); this.saveData(); this.$nextTick(() => this.updateMapRoute()); } } },
-            openTripSettings(tripId) { this.pendingTripId = tripId; const trip = this.allTrips[tripId]; this.editTemp = { name: trip.tripName, theme: trip.theme || 'wood' }; this.showSettingsModal = true; this.applyTheme(this.editTemp.theme); },
-            saveTripSettings() { if (this.allTrips[this.pendingTripId]) { this.allTrips[this.pendingTripId].tripName = this.editTemp.name; this.allTrips[this.pendingTripId].theme = this.editTemp.theme; if (hasFirebase) { db.ref('trips/' + this.pendingTripId).update({ tripName: this.editTemp.name, theme: this.editTemp.theme }); } else { localStorage.setItem('myTripBooks', JSON.stringify(this.allTrips)); } this.showSettingsModal = false; if (this.currentTripId === this.pendingTripId) { this.tripName = this.editTemp.name; this.applyTheme(this.editTemp.theme); } } },
-            
+            openTripSettings(tripId) { this.pendingTripId = tripId; const trip = this.allTrips[tripId]; if(!trip) return; this.editTemp = { name: trip.tripName, theme: trip.theme || 'wood' }; this.showSettingsModal = true; this.applyTheme(this.editTemp.theme); },
+            saveTripSettings() { if (this.allTrips[this.pendingTripId]) { this.allTrips[this.pendingTripId].tripName = this.editTemp.name; this.allTrips[this.pendingTripId].theme = this.editTemp.theme; if (hasFirebase) db.ref('trips/' + this.pendingTripId).update({ tripName: this.editTemp.name, theme: this.editTemp.theme }); else localStorage.setItem('myTripBooks', JSON.stringify(this.allTrips)); this.showSettingsModal = false; if (this.currentTripId === this.pendingTripId) { this.tripName = this.editTemp.name; this.applyTheme(this.editTemp.theme); } } },
             calcAnalysis() {
                 const map = { 'food': { label: '美食', chartColor: '#fca5a5' }, 'transport': { label: '交通', chartColor: '#93c5fd' }, 'ticket': { label: '門票', chartColor: '#d8b4fe' }, 'entertainment': { label: '娛樂', chartColor: '#fcd34d' }, 'accommodation': { label: '住宿', chartColor: '#86efac' }, 'other': { label: '其他', chartColor: '#d1d5db' } };
                 let stats = {}; Object.keys(map).forEach(k => stats[k] = 0);
@@ -552,10 +589,7 @@
                     let rate = this.rates[exp.currency] || 1; let valInTWD = exp.amount * rate; let cat = exp.category || 'other';
                     let amountToAdd = 0;
                     if (this.analysisFilter === 'all') amountToAdd = valInTWD;
-                    else {
-                        if (exp.splitType === 'custom' && exp.customData) amountToAdd = (exp.customData[this.analysisFilter] || 0) * rate;
-                        else if ((exp.involved || []).includes(this.analysisFilter)) amountToAdd = valInTWD / exp.involved.length;
-                    }
+                    else { if (exp.splitType === 'custom' && exp.customData) amountToAdd = (exp.customData[this.analysisFilter] || 0) * rate; else if ((exp.involved || []).includes(this.analysisFilter)) amountToAdd = valInTWD / exp.involved.length; }
                     stats[cat] += amountToAdd; totalFiltered += amountToAdd;
                 });
                 return Object.keys(stats).map(key => ({ key, label: map[key].label, chartColor: map[key].chartColor, amount: Math.round(stats[key] / targetRate), percent: totalFiltered > 0 ? Math.round((stats[key] / totalFiltered) * 100) : 0 })).filter(item => item.amount > 0).sort((a, b) => b.amount - a.amount);
@@ -565,43 +599,87 @@
                 const data = this.categoryAnalysis; if (this.chartInstance) { this.chartInstance.destroy(); } if (data.length === 0) return;
                 this.chartInstance = new Chart(ctx, { type: 'doughnut', data: { labels: data.map(d => d.label), datasets: [{ data: data.map(d => d.amount), backgroundColor: data.map(d => d.chartColor), borderWidth: 2, borderColor: '#fff' }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, cutout: '65%' } });
             },
-            loadTripList() { if (hasFirebase) { db.ref('trips').on('value', snapshot => { this.allTrips = snapshot.val() || {}; if(Object.keys(this.allTrips).length === 0) { this.createNewTrip(); } else if(!this.currentTripId) { this.$nextTick(() => { if (this.sortedTrips.length > 0) this.openTrip(this.sortedTrips[0].id); }); } }); } else { const saved = localStorage.getItem('myTripBooks'); if (saved) { this.allTrips = JSON.parse(saved); this.$nextTick(() => { if (this.sortedTrips.length > 0) this.openTrip(this.sortedTrips[0].id); }); } else { this.createNewTrip(); } } },
-            createNewTrip() { const newTripId = 'trip_' + Date.now(); const defaultTrip = { tripName: '新旅程', theme: 'wood', days: [{ activities: [], dailyNote: '' }], members: ['我', '旅伴'], startDate: new Date().toISOString().split('T')[0], wishlist: [], packingList: {}, externalLinks: [] }; if (hasFirebase) db.ref('trips/' + newTripId).set(defaultTrip); else { this.allTrips = { ...this.allTrips, [newTripId]: defaultTrip }; localStorage.setItem('myTripBooks', JSON.stringify(this.allTrips)); this.syncLocalOrder(); } setTimeout(() => { this.openTrip(newTripId); this.showSidebar = false; }, 100); },
-            openTrip(tripId) { this.currentTripId = tripId; this.isLoading = true; if (hasFirebase) { db.ref('trips/' + tripId).on('value', s => { this.handleTripData(s.val()); }); } else { this.handleTripData(this.allTrips[tripId]); } },
-            handleTripData(d) { if (d) { this.tripName = d.tripName || ''; this.days = (d.days || [{ activities: [], dailyNote: '' }]).map(day => ({ ...day, activities: (day.activities || []).map(act => ({ ...act, link: act.link || '' })) })); this.members = d.members || ['我', '旅伴']; this.expenses = d.expenses || []; this.wishlist = d.wishlist || []; this.packingList = d.packingList || {}; this.externalLinks = d.externalLinks || []; this.members.forEach(m => { if(!this.packingList[m]) this.packingList[m] = []; }); if (!this.currentPackingMember || !this.members.includes(this.currentPackingMember)) { this.currentPackingMember = this.members[0]; } if(d.rates) this.rates = d.rates; this.startDate = d.startDate || ''; this.applyTheme(d.theme || 'wood'); this.isLoading = false; this.showSidebar = false; this.$nextTick(() => { if(this.currentTab === 'schedule') this.retryInitMap(0); }); } },
-            deleteTripBook(tripId) { if(hasFirebase) { db.ref('trips/' + tripId).remove().then(() => { this.handleDeleteRedirect(tripId); }); } else { const temp = { ...this.allTrips }; delete temp[tripId]; this.allTrips = temp; localStorage.setItem('myTripBooks', JSON.stringify(this.allTrips)); this.handleDeleteRedirect(tripId); } },
-            handleDeleteRedirect(deletedTripId) { if(this.currentTripId === deletedTripId) { this.currentTripId = null; setTimeout(() => { const remaining = Object.keys(this.allTrips); if(remaining.length > 0) { this.openTrip(remaining[0]); } else { this.createNewTrip(); } }, 100); } },
-            saveData() { if (!this.currentTripId) return; const data = { tripName: this.tripName, theme: this.allTrips[this.currentTripId]?.theme || 'wood', days: this.days, members: this.members, expenses: this.expenses, wishlist: this.wishlist, packingList: this.packingList, rates: this.rates, externalLinks: this.externalLinks, startDate: this.startDate }; if (hasFirebase) db.ref('trips/' + this.currentTripId).update(data); else { this.allTrips[this.currentTripId] = data; localStorage.setItem('myTripBooks', JSON.stringify(this.allTrips)); } this.statusMessage = 'Saved'; },
-            moveActivity(index, direction) { const list = this.days[this.currentDayIndex].activities; if (direction === -1 && index > 0) { [list[index], list[index-1]] = [list[index-1], list[index]]; } else if (direction === 1 && index < list.length - 1) { [list[index], list[index+1]] = [list[index+1], list[index]]; } this.saveData(); this.$nextTick(() => this.updateMapRoute()); },
-            getSplitDetails(exp) { let details = []; let involved = (exp.involved || []).filter(m => this.members.includes(m)); if (exp.splitType === 'custom' && exp.customData) { for (let name in exp.customData) { if (this.members.includes(name) && exp.customData[name] > 0) { details.push({ name: name, amount: exp.customData[name] }); } } } else { if (involved.length > 0) { let amountPerPerson = Math.round(exp.amount / involved.length * 100) / 100; involved.forEach(name => details.push({ name: name, amount: amountPerPerson })); } } return details; },
+            loadTripList() {
+                if (hasFirebase && db) {
+                    db.ref('trips').on('value', snapshot => {
+                        this.allTrips = snapshot.val() || {};
+                        const keys = Object.keys(this.allTrips);
+                        if (keys.length > 0) { if (!this.currentTripId) this.openTrip(this.sortedTrips[0].id); } 
+                        else { this.createNewTrip(); }
+                    }, err => { this.isLoading = false; });
+                } else {
+                    const saved = localStorage.getItem('myTripBooks');
+                    this.allTrips = saved ? JSON.parse(saved) : {};
+                    const keys = Object.keys(this.allTrips);
+                    if (keys.length > 0) this.openTrip(this.sortedTrips[0].id); else this.createNewTrip();
+                }
+            },
+            createNewTrip() {
+                const newTripId = 'trip_' + Date.now();
+                const defaultTrip = { tripName: '新旅程', theme: 'wood', days: [{ activities: [], dailyNote: '', color: '' }], members: ['我', '旅伴'], startDate: new Date().toISOString().split('T')[0], wishlist: [], packingList: {}, externalLinks: [] };
+                if (hasFirebase) db.ref('trips/' + newTripId).set(defaultTrip); else { this.allTrips[newTripId] = defaultTrip; localStorage.setItem('myTripBooks', JSON.stringify(this.allTrips)); }
+                this.openTrip(newTripId);
+            },
+            openTrip(tripId) { this.currentTripId = tripId; this.isLoading = true; if (hasFirebase) db.ref('trips/' + tripId).once('value', s => this.handleTripData(s.val())); else this.handleTripData(this.allTrips[tripId]); },
+            handleTripData(d) {
+                if (d) {
+                    this.tripName = d.tripName || '';
+                    this.days = (d.days || [{ activities: [], color: '' }]).map(day => ({ ...day, color: day.color || '', activities: (day.activities || []) }));
+                    this.members = d.members || ['我', '旅伴']; this.expenses = d.expenses || []; this.wishlist = d.wishlist || []; this.packingList = d.packingList || {}; this.externalLinks = d.externalLinks || [];
+                    this.startDate = d.startDate || ''; this.applyTheme(d.theme || 'wood');
+                    this.isLoading = false; this.showSidebar = false;
+                    this.$nextTick(() => { if(this.currentTab === 'schedule') this.retryInitMap(0); });
+                } else { this.isLoading = false; }
+            },
+            deleteTripBook(tripId) { if(hasFirebase) db.ref('trips/' + tripId).remove(); const temp = {...this.allTrips}; delete temp[tripId]; this.allTrips = temp; if(this.currentTripId === tripId) this.loadTripList(); },
+            saveData() {
+                if (!this.currentTripId) return;
+                const data = { tripName: this.tripName, days: this.days, members: this.members, expenses: this.expenses, wishlist: this.wishlist, packingList: this.packingList, rates: this.rates, externalLinks: this.externalLinks, startDate: this.startDate, theme: this.allTrips[this.currentTripId].theme || 'wood' };
+                if (hasFirebase) db.ref('trips/' + this.currentTripId).update(data);
+                this.allTrips[this.currentTripId] = data; localStorage.setItem('myTripBooks', JSON.stringify(this.allTrips));
+                this.statusMessage = 'Saved ' + new Date().toLocaleTimeString();
+            },
+            moveActivity(index, direction) { const list = this.days[this.currentDayIndex].activities; if (direction === -1 && index > 0) [list[index], list[index-1]] = [list[index-1], list[index]]; else if (direction === 1 && index < list.length - 1) [list[index], list[index+1]] = [list[index+1], list[index]]; this.saveData(); this.$nextTick(() => this.updateMapRoute()); },
+            getSplitDetails(exp) { let details = []; let involved = (exp.involved || []).filter(m => this.members.includes(m)); if (exp.splitType === 'custom' && exp.customData) { for (let name in exp.customData) if (this.members.includes(name) && exp.customData[name] > 0) details.push({ name, amount: exp.customData[name] }); } else if (involved.length > 0) { let per = Math.round(exp.amount / involved.length * 100) / 100; involved.forEach(name => details.push({ name, amount: per })); } return details; },
             toggleExpandHistory(index) { const idx = this.expandedHistoryIndices.indexOf(index); if (idx > -1) this.expandedHistoryIndices.splice(idx, 1); else this.expandedHistoryIndices.push(index); },
             isExpanded(index) { return this.expandedHistoryIndices.includes(index); },
             changeSplitMode(mode) { this.splitMode = mode; if(mode === 'custom') { this.customSplitAmounts = {}; this.members.forEach(m => this.customSplitAmounts[m] = 0); this.newExpense.amount = 0; } },
             updateTotalFromCustom() { let sum = 0; for (let key in this.customSplitAmounts) sum += (this.customSplitAmounts[key] || 0); this.newExpense.amount = sum; },
-            getDateLabel(index) { if (!this.startDate) return ''; const start = new Date(this.startDate); if (isNaN(start.getTime())) return ''; start.setDate(start.getDate() + index); const mm = (start.getMonth() + 1).toString().padStart(2, '0'); const dd = start.getDate().toString().padStart(2, '0'); const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']; return `${mm}/${dd} (${dayNames[start.getDay()]})`; },
+            getDateLabel(index) { if (!this.startDate) return ''; const start = new Date(this.startDate); start.setDate(start.getDate() + index); return (start.getMonth() + 1) + '/' + start.getDate(); },
             getCategoryIcon(cat) { const icons = { 'food': '🍴', 'transport': '🚅', 'ticket': '🎫', 'entertainment': '🎡', 'accommodation': '🏨', 'other': '📦' }; return icons[cat] || '📦'; },
             toggleInvolved(member) { const idx = this.newExpense.involved.indexOf(member); if (idx > -1) this.newExpense.involved.splice(idx, 1); else this.newExpense.involved.push(member); },
-            addExpense() { if(this.newExpense.title && this.newExpense.amount && this.newExpense.payer) { if (this.splitMode === 'equal' && this.newExpense.involved.length === 0) { alert("至少需一人分擔"); return; } const now = new Date(); const dateStr = `${now.getFullYear()}/${(now.getMonth()+1).toString().padStart(2,'0')}/${now.getDate().toString().padStart(2,'0')} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`; let record = JSON.parse(JSON.stringify(this.newExpense)); record.date = dateStr; record.splitType = this.splitMode; if (this.splitMode === 'custom') record.customData = JSON.parse(JSON.stringify(this.customSplitAmounts)); this.expenses.push(record); this.newExpense.title = ''; this.newExpense.amount = ''; this.customSplitAmounts = {}; this.saveData(); } },
+            addExpense() { if(this.newExpense.title && this.newExpense.amount && this.newExpense.payer) { const now = new Date(); let record = JSON.parse(JSON.stringify(this.newExpense)); record.date = `${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${now.getMinutes()}`; record.splitType = this.splitMode; if (this.splitMode === 'custom') record.customData = JSON.parse(JSON.stringify(this.customSplitAmounts)); this.expenses.push(record); this.newExpense.title = ''; this.newExpense.amount = ''; this.saveData(); } },
             deleteExpense(idx) { if (confirm("確定刪除紀錄？")) { this.expenses.splice(idx, 1); this.saveData(); } },
-            addMember() { if(this.newMemberName.trim()) { const name = this.newMemberName.trim(); this.members.push(name); if(!this.packingList[name]) this.packingList[name] = []; this.newMemberName=''; this.saveData(); } },
-            removeMember(idx) { if(confirm('移除成員？')) { const removedName = this.members[idx]; this.members = this.members.filter((_, i) => i !== idx); delete this.packingList[removedName]; this.saveData(); } },
+            addMember() { if(this.newMemberName.trim()) { this.members.push(this.newMemberName.trim()); this.newMemberName=''; this.saveData(); } },
+            removeMember(idx) { if(confirm('移除成員？')) { this.members.splice(idx, 1); this.saveData(); } },
             openGoogleMaps(place) { if (!place) return; window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place)}`, '_blank'); },
             getHour(timeStr) { return (timeStr && timeStr.includes(':')) ? timeStr.split(':')[0] : '10'; },
-            getMinute(timeStr) { if(!timeStr || !timeStr.includes(':')) return '00'; let m = timeStr.split(':')[1]; return this.minuteOptions.includes(m) ? m : '00'; },
-            updateTime(item, value, type) { let currentH = this.getHour(item.time); let currentM = this.getMinute(item.time); item.time = (type === 'hour') ? `${value}:${currentM}` : `${currentH}:${value}`; this.saveData(); },
+            getMinute(timeStr) { return (timeStr && timeStr.includes(':')) ? timeStr.split(':')[1] : '00'; },
+            updateTime(item, value, type) { let h = this.getHour(item.time), m = this.getMinute(item.time); item.time = (type === 'hour') ? `${value}:${m}` : `${h}:${value}`; this.saveData(); },
             getTypeColor(type) { switch(type) { case 'food': return 'bg-[#d8a48f]'; case 'transport': return 'bg-[#8ab8a8]'; case 'accommodation': return 'bg-[#9ea6b3]'; default: return 'bg-[#dccbba]'; } },
-            retryInitMap(attempts) { if (attempts > 10) return; if (document.getElementById("google-map") && typeof google !== 'undefined') { this.initMap(); } else { setTimeout(() => this.retryInitMap(attempts + 1), 200); } },
-            initMap() { if (!document.getElementById("google-map")) return; try { this.directionsService = new google.maps.DirectionsService(); this.directionsRenderer = new google.maps.DirectionsRenderer({ map: this.map, polylineOptions: { strokeColor: "#8b5e3c", strokeWeight: 4, strokeOpacity: 0.8 }, suppressMarkers: false }); const cleanStyles = [{ "featureType": "landscape", "stylers": [{ "color": "#fdfcf8" }] }, { "featureType": "road", "stylers": [{ "saturation": -100 }, { "lightness": 40 }] }, { "featureType": "water", "stylers": [{ "color": "#c9d6d6" }] }, { "featureType": "poi", "stylers": [{ "visibility": "off" }] }]; this.map = new google.maps.Map(document.getElementById("google-map"), { zoom: 12, center: { lat: 35.68, lng: 139.76 }, disableDefaultUI: true, zoomControl: false, styles: cleanStyles }); this.directionsRenderer.setMap(this.map); this.updateMapRoute(); } catch (e) { this.mapError = true; } },
-            async updateMapRoute() { if (!this.directionsService || this.currentTab !== 'schedule' || this.isMapUpdating) return; this.isMapUpdating = true; try { if (this.markers) { this.markers.forEach(m => m.setMap(null)); } this.markers = []; this.weatherData = null; const activities = (this.days[this.currentDayIndex] || {}).activities || []; const places = activities.filter(a => a.place && a.place.trim() !== "" && a.type !== 'transport').map(a => a.place); if (places.length === 0) { this.directionsRenderer.setDirections({routes: []}); this.isMapUpdating = false; return; } const geocoder = new google.maps.Geocoder(); let validLocations = []; for (let p of places) { try { const results = await this.geocodePromise(geocoder, p); if (results && results[0]) { const loc = results[0].geometry.location; validLocations.push(loc); if (!this.weatherData) this.getWeather(loc.lat(), loc.lng()); } } catch (e) {} } if (validLocations.length === 0) { this.directionsRenderer.setDirections({routes: []}); } else if (validLocations.length === 1) { this.directionsRenderer.setDirections({routes: []}); this.map.setCenter(validLocations[0]); this.markers.push(new google.maps.Marker({ map: this.map, position: validLocations[0] })); } else { const result = await new Promise((resolve, reject) => { this.directionsService.route({ origin: validLocations[0], destination: validLocations[validLocations.length - 1], waypoints: validLocations.slice(1, -1).map(loc => ({ location: loc, stopover: true })), travelMode: 'DRIVING' }, (res, status) => { if (status === 'OK') resolve(res); else reject(status); }); }); this.directionsRenderer.setDirections(result); } } catch (error) {} finally { this.isMapUpdating = false; } },
+            retryInitMap(attempts) { if (attempts > 10) return; if (typeof google !== 'undefined') this.initMap(); else setTimeout(() => this.retryInitMap(attempts + 1), 300); },
+            initMap() { if (!document.getElementById("google-map")) return; try { this.directionsService = new google.maps.DirectionsService(); this.directionsRenderer = new google.maps.DirectionsRenderer({ map: this.map, suppressMarkers: false }); this.map = new google.maps.Map(document.getElementById("google-map"), { zoom: 12, center: { lat: 35.68, lng: 139.76 }, disableDefaultUI: true }); this.directionsRenderer.setMap(this.map); this.updateMapRoute(); } catch (e) { this.mapError = true; } },
+            async updateMapRoute() { 
+                if (!this.directionsService || this.currentTab !== 'schedule' || this.isMapUpdating || !this.days[this.currentDayIndex]) return; 
+                this.isMapUpdating = true; 
+                try { 
+                    const activities = this.days[this.currentDayIndex].activities || []; 
+                    const places = activities.filter(a => a.place && a.place.trim() !== "" && a.type !== 'transport').map(a => a.place); 
+                    if (places.length === 0) { this.directionsRenderer.setDirections({routes: []}); this.isMapUpdating = false; return; } 
+                    const geocoder = new google.maps.Geocoder(); let validLocations = []; 
+                    for (let p of places) { try { const res = await this.geocodePromise(geocoder, p); if (res && res[0]) validLocations.push(res[0].geometry.location); } catch (e) {} } 
+                    if (validLocations.length > 1) { this.directionsService.route({ origin: validLocations[0], destination: validLocations[validLocations.length - 1], waypoints: validLocations.slice(1, -1).map(loc => ({ location: loc, stopover: true })), travelMode: 'DRIVING' }, (res, status) => { if (status === 'OK') this.directionsRenderer.setDirections(res); }); }
+                } catch (e) {} finally { this.isMapUpdating = false; } 
+            },
             geocodePromise(geocoder, address) { return new Promise((resolve, reject) => { geocoder.geocode({ 'address': address }, (results, status) => { if (status === 'OK') resolve(results); else reject(status); }); }); },
-            getWeather(lat, lng) { fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current_weather=true`).then(res => res.json()).then(data => { if(data.current_weather) { const code = data.current_weather.weathercode; const temp = data.current_weather.temperature; let icon = '☁️'; if (code === 0) icon = '☀️'; else if (code <= 3) icon = '⛅'; this.weatherData = { temp, icon, desc: 'Weather OK' }; } }); },
-            changeDay(index) { this.currentDayIndex = index; setTimeout(() => this.updateMapRoute(), 300); },
-            addDay() { this.days.push({ activities: [], dailyNote: '' }); this.changeDay(this.days.length - 1); this.saveData(); },
-            deleteDay() { if(confirm('刪除此日？')) { this.days.splice(this.currentDayIndex, 1); if(this.days.length === 0) this.days.push({activities:[], dailyNote: ''}); this.currentDayIndex = Math.max(0, this.currentDayIndex - 1); this.saveData(); this.$nextTick(() => this.updateMapRoute()); } },
-            addActivity() { if (!this.days[this.currentDayIndex].activities) this.days[this.currentDayIndex].activities = []; this.days[this.currentDayIndex].activities.push({ time: '10:00', place: '', note: '', type: 'sightseeing', transportToNext: '', showTransportInput: false, link: '' }); this.saveData(); },
-            initAutocomplete(index, event) { const input = event.target; if (input.dataset.autocompleteInit) return; try { const autocomplete = new google.maps.places.Autocomplete(input, { types: ['geocode', 'establishment'] }); autocomplete.addListener('place_changed', () => { const place = autocomplete.getPlace(); if (place.name || place.formatted_address) { this.days[this.currentDayIndex].activities[index].place = place.name || place.formatted_address; this.saveData(); this.updateMapRoute(); } }); input.dataset.autocompleteInit = 'true'; } catch (e) {} },
-            settleDebt(trans) { if (!confirm(`確定結清 ${trans.from} 給 ${trans.to} 的 ${trans.amount} 元？`)) return; const now = new Date(); const record = { title: `結清: ${trans.from} → ${trans.to}`, amount: trans.amount, currency: this.displayCurrency, payer: trans.from, involved: [trans.to], category: 'other', splitType: 'equal', date: `${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${now.getMinutes()}` }; this.expenses.push(record); this.saveData(); },
-            handleActivityLink(item) { if (item.link) { if (confirm("開啟連結？")) { window.open(item.link, '_blank'); } else { const newUrl = prompt("修改網址:", item.link); if (newUrl !== null) { item.link = newUrl.trim(); this.saveData(); } } } else { const url = prompt("輸入網址:", "https://"); if (url && url !== "https://") { item.link = url.trim(); this.saveData(); } } }
+            changeDay(index) { if(this.days[index]) { this.currentDayIndex = index; this.$nextTick(() => this.updateMapRoute()); } },
+            moveDay(index, direction) { const target = index + direction; if (target >= 0 && target < this.days.length) { [this.days[index], this.days[target]] = [this.days[target], this.days[index]]; if (this.currentDayIndex === index) this.currentDayIndex = target; else if (this.currentDayIndex === target) this.currentDayIndex = index; this.saveData(); } },
+            addDay() { const newDay = { activities: [], dailyNote: '', color: '' }; this.days.splice(this.currentDayIndex + 1, 0, newDay); this.changeDay(this.currentDayIndex + 1); this.saveData(); },
+            deleteDay() { if(confirm('刪除此日？')) { this.days.splice(this.currentDayIndex, 1); if(this.days.length === 0) this.days.push({activities:[], dailyNote: '', color: ''}); this.currentDayIndex = Math.max(0, this.currentDayIndex - 1); this.saveData(); } },
+            addActivity() { if (!this.days[this.currentDayIndex].activities) this.days[this.currentDayIndex].activities = []; this.days[this.currentDayIndex].activities.push({ time: '10:00', place: '', note: '', type: 'sightseeing' }); this.saveData(); },
+            initAutocomplete(index, event) { const input = event.target; if (input.dataset.autocompleteInit) return; try { const autocomplete = new google.maps.places.Autocomplete(input); autocomplete.addListener('place_changed', () => { const place = autocomplete.getPlace(); if (place.name) { this.days[this.currentDayIndex].activities[index].place = place.name; this.saveData(); this.updateMapRoute(); } }); input.dataset.autocompleteInit = 'true'; } catch (e) {} },
+            settleDebt(trans) { if (!confirm(`確定結清 ${trans.from} 給 ${trans.to} 的 ${trans.amount} 元？`)) return; this.expenses.push({ title: `結清: ${trans.from} → ${trans.to}`, amount: trans.amount, currency: this.displayCurrency, payer: trans.from, involved: [trans.to], category: 'other', date: new Date().toLocaleDateString() }); this.saveData(); },
+            handleActivityLink(item) { if (item.link) window.open(item.link, '_blank'); else { const url = prompt("輸入網址:", "https://"); if (url) { item.link = url; this.saveData(); } } }
         }
     }).mount('#app');
 </script>
