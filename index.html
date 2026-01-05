@@ -52,6 +52,7 @@
         .color-dot { width: 28px; height: 28px; border-radius: 50%; cursor: pointer; border: 2px solid var(--theme-light); transition: transform 0.2s; }
         .color-dot.active { border-color: var(--text-main); transform: scale(1.2); box-shadow: 0 0 8px rgba(0,0,0,0.1); }
         
+        /* 天數樣式 */
         .day-tab { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border-width: 2px; }
         .day-tab.active { transform: scale(1.05); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
         .color-picker-dot { width: 20px; height: 20px; border-radius: 4px; cursor: pointer; border: 1px solid rgba(0,0,0,0.1); flex-shrink: 0; transition: transform 0.1s; }
@@ -177,7 +178,6 @@
                         <h2 class="text-lg font-bold text-[var(--theme-main)] tracking-widest">旅程書櫃</h2>
                         <button @click="showSidebar = false" class="text-[var(--text-sub)]">✕</button>
                     </div>
-                    <!-- 新增補充說明文字 -->
                     <div class="text-[10px] text-[var(--text-sub)] font-normal mt-1 opacity-70">首頁為擺放最上層旅遊書</div>
                 </div>
                 <div class="flex-1 overflow-y-auto p-4 space-y-3 custom-scroll">
@@ -239,7 +239,6 @@
                 <div class="flex-1 min-w-0">
                     <div class="overflow-x-auto whitespace-nowrap custom-scroll flex gap-2 pb-2 px-1">
                         <div v-for="(day, index) in days" :key="index" class="shrink-0 cursor-pointer" @click="changeDay(index)">
-                            <!-- 天數顏色邏輯 -->
                             <div :style="{ 
                                     backgroundColor: currentDayIndex === index ? (day.color || 'var(--theme-main)') : 'var(--bg-card)', 
                                     color: currentDayIndex === index ? '#fff' : (day.color || 'var(--text-sub)'),
@@ -318,7 +317,22 @@
                             <button @click.stop="moveActivity(index, 1)" class="h-1/2 w-full flex items-center justify-center text-[var(--theme-accent)] hover:text-[var(--theme-main)] hover:bg-[var(--theme-light)]/50 transition disabled:opacity-20" :disabled="index === (days[currentDayIndex].activities.length - 1)">▼</button>
                         </div>
                     </div>
+                    
+                    <!-- 恢復功能：接駁交通備註 -->
+                    <div v-if="index < days[currentDayIndex].activities.length - 1" class="ml-12 my-0.5 flex flex-col items-start border-l-2 border-dotted border-[var(--theme-light)] pl-4 min-h-[16px] transition-all">
+                        <button v-if="!item.transportToNext && !item.showTransportInput" @click="item.showTransportInput = true" class="text-[9px] font-bold text-[var(--theme-accent)] hover:text-[var(--theme-main)] transition-colors py-0.5 opacity-40 hover:opacity-100 flex items-center gap-1"><span>+</span> 接駁</button>
+                        <div v-else class="w-full flex items-start gap-2 animate-fade-in pr-4 pb-1">
+                            <span class="text-xs grayscale opacity-70 shrink-0 mt-1">🚅</span>
+                            <textarea v-model="item.transportToNext" @change="saveData" rows="2" placeholder="交通說明..." class="flex-1 text-[10px] bg-transparent border-b border-[var(--theme-light)] outline-none focus:border-[var(--theme-accent)] text-[var(--text-sub)] placeholder-[var(--theme-light)] py-1 resize-none leading-normal"></textarea>
+                            <button @click="item.transportToNext = ''; item.showTransportInput = false; saveData()" class="text-[var(--text-sub)] hover:text-[var(--danger)] text-[10px] px-1 transition-colors mt-1">✕</button>
+                        </div>
+                    </div>
                 </template>
+            </div>
+
+            <div v-if="days[currentDayIndex]" class="mt-8 pt-4 border-t border-[var(--theme-light)] bg-[var(--theme-light)]/10 rounded-xl p-4">
+                <div class="flex items-center gap-2 mb-2 text-[10px] font-bold text-[var(--text-sub)] tracking-widest uppercase"><span>📋 Daily Notes</span></div>
+                <textarea v-model="days[currentDayIndex].dailyNote" @change="saveData" @input="autoGrow($event.target)" placeholder="今日的重要提醒或心得..." class="w-full text-xs text-[var(--text-main)] bg-transparent outline-none resize-y leading-relaxed min-h-[60px] custom-scroll"></textarea>
             </div>
             <button @click="addActivity" class="w-full py-3 border border-dashed border-[var(--theme-accent)] text-[var(--theme-accent)] rounded-xl text-xs hover:border-[var(--theme-main)] hover:text-[var(--theme-main)] transition tracking-widest mt-2 bg-[var(--bg-card)]/50">+ ADD ITEM</button>
         </div>
@@ -547,7 +561,7 @@
             groupedExpenses() { const groups = {}; this.expenses.forEach((exp, index) => { const dateKey = exp.date ? exp.date.split(' ')[0] : '其他'; if (!groups[dateKey]) { groups[dateKey] = { items: [] }; } groups[dateKey].items.push({ data: exp, originalIndex: index }); }); return Object.keys(groups).sort((a, b) => b.localeCompare(a)).reduce((obj, key) => { obj[key] = groups[key]; return obj; }, {}); },
             settlementPlan() { if (!this.members.length) return []; let balances = {}; this.members.forEach(m => balances[m] = 0); this.expenses.forEach(exp => { let rate = this.rates[exp.currency] || 1; let valInTWD = exp.amount * rate; if (balances[exp.payer] !== undefined) balances[exp.payer] += valInTWD; if (exp.splitType === 'custom' && exp.customData) { for (let m in exp.customData) { if (this.members.includes(m)) { let share = (exp.customData[m] || 0) * rate; if (balances[m] !== undefined) balances[m] -= share; } } } else { let involved = (exp.involved || []).filter(m => this.members.includes(m)); if (involved.length > 0) { let split = valInTWD / involved.length; involved.forEach(m => { if (balances[m] !== undefined) balances[m] -= split; }); } } }); let debtors = []; let creditors = []; for (const [name, amount] of Object.entries(balances)) { if (amount < -1) debtors.push({ name, amount: amount }); else if (amount > 1) creditors.push({ name, amount: amount }); } debtors.sort((a, b) => a.amount - b.amount); creditors.sort((a, b) => b.amount - a.amount); let transactions = []; let i = 0, j = 0; while (i < debtors.length && j < creditors.length) { let debtor = debtors[i], creditor = creditors[j]; let amount = Math.min(Math.abs(debtor.amount), creditor.amount); let targetRate = this.rates[this.displayCurrency] || 1; transactions.push({ from: debtor.name, to: creditor.name, amount: Math.round(amount / targetRate) }); debtor.amount += amount; creditor.amount -= amount; if (Math.abs(debtor.amount) < 1) i++; if (creditor.amount < 1) j++; } return transactions; }
         },
-        mounted() { this.loadTripList(); window.gm_authFailure = () => { this.mapError = true; }; setTimeout(() => { if(this.isLoading) this.isLoading = false; }, 5000); },
+        mounted() { this.loadTripList(); setTimeout(() => { if(this.isLoading) this.isLoading = false; }, 5000); },
         methods: {
             autoGrow(element) { element.style.height = "auto"; element.style.height = (element.scrollHeight) + "px"; },
             toggleDateGroup(dateKey) { this.collapsedDates[dateKey] = !this.collapsedDates[dateKey]; },
@@ -575,6 +589,7 @@
                     [currentList[index], currentList[targetIndex]] = [currentList[targetIndex], currentList[index]]; 
                     this.localOrder = currentList; 
                     localStorage.setItem('myTripOrder', JSON.stringify(this.localOrder)); 
+                    // 當調整順序後，如果程式剛啟動，它會自動開啟最上面的那本
                 } 
             },
             applyTheme(themeKey) { const styles = this.themePresets[themeKey] || this.themePresets['wood']; for (const [key, value] of Object.entries(styles)) { document.documentElement.style.setProperty(key, value); } },
@@ -606,10 +621,10 @@
                 if (hasFirebase && db) {
                     db.ref('trips').on('value', snapshot => {
                         this.allTrips = snapshot.val() || {};
-                        this.syncLocalOrder(); // 先同步排序
+                        this.syncLocalOrder(); 
                         if (Object.keys(this.allTrips).length > 0) { 
                             if (!this.currentTripId) {
-                                // 修正：預設讀取排序第一位的行程
+                                // 修正：首頁永遠加載排序最上方那一本
                                 const topTripId = this.sortedTrips[0].id;
                                 this.openTrip(topTripId);
                             } 
@@ -632,7 +647,16 @@
             handleTripData(d) {
                 if (d) {
                     this.tripName = d.tripName || '';
-                    this.days = (d.days || [{ activities: [], color: '' }]).map(day => ({ ...day, color: day.color || '', activities: (day.activities || []) }));
+                    this.days = (d.days || [{ activities: [], color: '' }]).map(day => ({ 
+                        ...day, 
+                        color: day.color || '', 
+                        activities: (day.activities || []).map(act => ({
+                            ...act,
+                            transportToNext: act.transportToNext || '',
+                            showTransportInput: !!act.transportToNext,
+                            link: act.link || ''
+                        }))
+                    }));
                     this.members = d.members || ['我', '旅伴']; this.expenses = d.expenses || []; this.wishlist = d.wishlist || []; this.packingList = d.packingList || {}; this.externalLinks = d.externalLinks || [];
                     this.startDate = d.startDate || ''; this.applyTheme(d.theme || 'wood');
                     this.isLoading = false; this.showSidebar = false;
@@ -673,18 +697,18 @@
                 try { 
                     const activities = this.days[this.currentDayIndex].activities || []; 
                     const places = activities.filter(a => a.place && a.place.trim() !== "" && a.type !== 'transport').map(a => a.place); 
-                    if (places.length === 0) { this.directionsRenderer.setDirections({routes: []}); this.isMapUpdating = false; return; } 
+                    if (places.length === 0) { if(this.directionsRenderer) this.directionsRenderer.setDirections({routes: []}); this.isMapUpdating = false; return; } 
                     const geocoder = new google.maps.Geocoder(); let validLocations = []; 
                     for (let p of places) { try { const res = await this.geocodePromise(geocoder, p); if (res && res[0]) validLocations.push(res[0].geometry.location); } catch (e) {} } 
                     if (validLocations.length > 1) { this.directionsService.route({ origin: validLocations[0], destination: validLocations[validLocations.length - 1], waypoints: validLocations.slice(1, -1).map(loc => ({ location: loc, stopover: true })), travelMode: 'DRIVING' }, (res, status) => { if (status === 'OK') this.directionsRenderer.setDirections(res); }); }
                 } catch (e) {} finally { this.isMapUpdating = false; } 
             },
             geocodePromise(geocoder, address) { return new Promise((resolve, reject) => { geocoder.geocode({ 'address': address }, (results, status) => { if (status === 'OK') resolve(results); else reject(status); }); }); },
-            changeDay(index) { if(this.days[index]) { this.currentDayIndex = index; this.$nextTick(() => this.updateMapRoute()); } },
+            changeDay(index) { if(this.days[index]) { this.currentDayIndex = index; this.$nextTick(() => { this.updateMapRoute(); }); } },
             moveDay(index, direction) { const target = index + direction; if (target >= 0 && target < this.days.length) { [this.days[index], this.days[target]] = [this.days[target], this.days[index]]; if (this.currentDayIndex === index) this.currentDayIndex = target; else if (this.currentDayIndex === target) this.currentDayIndex = index; this.saveData(); } },
             addDay() { const newDay = { activities: [], dailyNote: '', color: '' }; this.days.splice(this.currentDayIndex + 1, 0, newDay); this.changeDay(this.currentDayIndex + 1); this.saveData(); },
             deleteDay() { if(confirm('刪除此日？')) { this.days.splice(this.currentDayIndex, 1); if(this.days.length === 0) this.days.push({activities:[], dailyNote: '', color: ''}); this.currentDayIndex = Math.max(0, this.currentDayIndex - 1); this.saveData(); } },
-            addActivity() { if (!this.days[this.currentDayIndex].activities) this.days[this.currentDayIndex].activities = []; this.days[this.currentDayIndex].activities.push({ time: '10:00', place: '', note: '', type: 'sightseeing' }); this.saveData(); },
+            addActivity() { if (!this.days[this.currentDayIndex].activities) this.days[this.currentDayIndex].activities = []; this.days[this.currentDayIndex].activities.push({ time: '10:00', place: '', note: '', type: 'sightseeing', transportToNext: '', showTransportInput: false, link: '' }); this.saveData(); },
             initAutocomplete(index, event) { const input = event.target; if (input.dataset.autocompleteInit) return; try { const autocomplete = new google.maps.places.Autocomplete(input); autocomplete.addListener('place_changed', () => { const place = autocomplete.getPlace(); if (place.name) { this.days[this.currentDayIndex].activities[index].place = place.name; this.saveData(); this.updateMapRoute(); } }); input.dataset.autocompleteInit = 'true'; } catch (e) {} },
             settleDebt(trans) { if (!confirm(`確定結清 ${trans.from} 給 ${trans.to} 的 ${trans.amount} 元？`)) return; this.expenses.push({ title: `結清: ${trans.from} → ${trans.to}`, amount: trans.amount, currency: this.displayCurrency, payer: trans.from, involved: [trans.to], category: 'other', date: new Date().toLocaleDateString() }); this.saveData(); },
             handleActivityLink(item) { if (item.link) window.open(item.link, '_blank'); else { const url = prompt("輸入網址:", "https://"); if (url) { item.link = url; this.saveData(); } } }
