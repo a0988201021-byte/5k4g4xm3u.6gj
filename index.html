@@ -639,31 +639,25 @@
                 this.expenses.forEach(exp => {
                     const rate = parseFloat(this.rates[exp.currency] || 1);
                     const payer = exp.payer;
-                    if (!this.members.includes(payer)) return;
+                    const totalAmount = parseFloat(exp.amount || 0);
 
-                    // 1. 強制以分擔明細之加總作為此交易之唯一正確台幣總額
-                    let totalValTWD = 0;
+                    // 1. 付款人得到 Credit (需在目前的成員名單中)
+                    if (this.members.includes(payer)) {
+                        balances[payer] += totalAmount * rate;
+                    }
+
+                    // 2. 參與者扣除 Debit
                     if (exp.splitType === 'custom' && exp.customData) {
                         for (let m in exp.customData) {
                             if (this.members.includes(m)) {
-                                totalValTWD += parseFloat(exp.customData[m] || 0) * rate;
-                            }
-                        }
-                        // 付款人得到整筆 Credit
-                        balances[payer] += totalValTWD;
-                        // 參與者扣除各自 Debit
-                        for (let m in exp.customData) {
-                            if (this.members.includes(m)) {
-                                balances[m] -= parseFloat(exp.customData[m] || 0) * rate;
+                                balances[m] -= (parseFloat(exp.customData[m]) || 0) * rate;
                             }
                         }
                     } else {
-                        // 平均分擔模式
-                        totalValTWD = parseFloat(exp.amount || 0) * rate;
+                        // 平均分擔模式：僅計算目前還在名單內的參與人
                         let involved = (exp.involved || []).filter(m => this.members.includes(m));
                         if (involved.length > 0) {
-                            balances[payer] += totalValTWD;
-                            let splitTWD = totalValTWD / involved.length;
+                            let splitTWD = (totalAmount * rate) / involved.length;
                             involved.forEach(m => {
                                 balances[m] -= splitTWD;
                             });
@@ -674,34 +668,32 @@
                 // 2. 媒合債務（以 TWD 為基礎運算）
                 let debtors = [];
                 let creditors = [];
-                const epsilon = 0.001; // 極嚴格精確度
+                const epsilon = 0.1; // 忽略極小誤差
 
-                for (const [name, amount] of Object.entries(balances)) {
-                    if (amount < -epsilon) debtors.push({ name, amount: amount });
-                    else if (amount > epsilon) creditors.push({ name, amount: amount });
+                for (let m of this.members) {
+                    let amt = balances[m];
+                    if (amt < -epsilon) debtors.push({ name: m, amount: Math.abs(amt) });
+                    else if (amt > epsilon) creditors.push({ name: m, amount: amt });
                 }
-
-                debtors.sort((a, b) => a.amount - b.amount);
-                creditors.sort((a, b) => b.amount - a.amount);
 
                 let transactions = [];
                 let i = 0, j = 0;
                 while (i < debtors.length && j < creditors.length) {
                     let debtor = debtors[i], creditor = creditors[j];
-                    let amountTWD = Math.min(Math.abs(debtor.amount), creditor.amount);
+                    let amountTWD = Math.min(debtor.amount, creditor.amount);
                     
                     const targetDisplayRate = parseFloat(this.rates[this.displayCurrency] || 1);
                     transactions.push({ 
                         from: debtor.name, 
                         to: creditor.name, 
-                        amount: Math.round(amountTWD / targetDisplayRate) // 最後顯示才捨入
+                        amount: Math.round(amountTWD / targetDisplayRate)
                     });
 
-                    debtor.amount += amountTWD;
+                    debtor.amount -= amountTWD;
                     creditor.amount -= amountTWD;
 
-                    if (Math.abs(debtor.amount) < epsilon) i++;
-                    if (creditor.amount < epsilon) j++;
+                    if (debtor.amount <= epsilon) i++;
+                    if (creditor.amount <= epsilon) j++;
                 }
                 return transactions;
             }
@@ -755,19 +747,17 @@
                     let amountTWD = 0;
 
                     if (this.analysisFilter === 'all') {
-                        // 總計也必須基於自定義加總或原始金額
-                        if (exp.splitType === 'custom' && exp.customData) {
-                            for (let m in exp.customData) if (this.members.includes(m)) amountTWD += parseFloat(exp.customData[m] || 0) * rate;
-                        } else {
-                            amountTWD = parseFloat(exp.amount || 0) * rate;
-                        }
+                        amountTWD = parseFloat(exp.amount || 0) * rate;
                     } else { 
-                        // 個人計費邏輯與結算保持一致
+                        // 特定成員分析：需與結算邏輯保持一致
                         if (exp.splitType === 'custom' && exp.customData) {
-                            amountTWD = parseFloat(exp.customData[this.analysisFilter] || 0) * rate;
-                        } else if ((exp.involved || []).includes(this.analysisFilter)) {
-                            amountTWD = (parseFloat(exp.amount || 0) * rate) / (exp.involved.length || 1);
-                        } 
+                            amountTWD = (parseFloat(exp.customData[this.analysisFilter]) || 0) * rate;
+                        } else {
+                            let involved = (exp.involved || []).filter(m => this.members.includes(m));
+                            if (involved.includes(this.analysisFilter)) {
+                                amountTWD = (parseFloat(exp.amount || 0) * rate) / involved.length;
+                            }
+                        }
                     }
                     stats[cat] += amountTWD; 
                     totalFilteredTWD += amountTWD;
@@ -843,12 +833,18 @@
             moveActivity(index, direction) { const list = this.days[this.currentDayIndex].activities; if (direction === -1 && index > 0) [list[index], list[index-1]] = [list[index-1], list[index]]; else if (direction === 1 && index < list.length - 1) [list[index], list[index+1]] = [list[index+1], list[index]]; this.saveData(); this.$nextTick(() => this.updateMapRoute()); },
             getSplitDetails(exp) { 
                 let details = []; 
-                let involved = (exp.involved || []).filter(m => this.members.includes(m)); 
                 if (exp.splitType === 'custom' && exp.customData) { 
-                    for (let name in exp.customData) if (this.members.includes(name) && exp.customData[name] > 0) details.push({ name, amount: exp.customData[name] }); 
-                } else if (involved.length > 0) { 
-                    let per = Math.round(parseFloat(exp.amount || 0) / involved.length * 100) / 100; 
-                    involved.forEach(name => details.push({ name, amount: per })); 
+                    for (let name in exp.customData) {
+                        if (this.members.includes(name)) {
+                            details.push({ name, amount: parseFloat(exp.customData[name]) || 0 }); 
+                        }
+                    }
+                } else { 
+                    let involved = (exp.involved || []).filter(m => this.members.includes(m));
+                    if (involved.length > 0) { 
+                        let per = Math.round(parseFloat(exp.amount || 0) / involved.length * 100) / 100; 
+                        involved.forEach(name => details.push({ name, amount: per })); 
+                    } 
                 } 
                 return details; 
             },
@@ -900,14 +896,23 @@
             addExpense() { 
                 if(this.newExpense.title && (this.newExpense.amount !== '') && this.newExpense.payer) { 
                     let record = JSON.parse(JSON.stringify(this.newExpense)); 
-                    record.amount = parseFloat(record.amount);
-                    record.splitType = this.splitMode; 
+                    
                     if (this.splitMode === 'custom') {
-                        // 強制修正總金額為分擔金額之加總，防止數值不一致
                         let sum = 0;
-                        for (let k in this.customSplitAmounts) sum += (parseFloat(this.customSplitAmounts[k]) || 0);
+                        let sanitizedCustom = {};
+                        // 確保自訂金額僅包含現有成員並精確加總
+                        this.members.forEach(m => {
+                            let val = parseFloat(this.customSplitAmounts[m]) || 0;
+                            sanitizedCustom[m] = val;
+                            sum += val;
+                        });
                         record.amount = sum;
-                        record.customData = JSON.parse(JSON.stringify(this.customSplitAmounts));
+                        record.customData = sanitizedCustom;
+                        record.splitType = 'custom';
+                    } else {
+                        record.amount = parseFloat(record.amount) || 0;
+                        record.splitType = 'equal';
+                        record.involved = record.involved.filter(m => this.members.includes(m));
                     }
                     
                     if (this.editingExpenseIndex !== null) {
