@@ -581,7 +581,6 @@
                 analysisFilter: 'all', rates: { TWD: 1, JPY: 0.22, USD: 32.5, EUR: 35.0 },
                 expenses: [], splitMode: 'equal', customSplitAmounts: {},
                 editingExpenseIndex: null, previewPhotoUrl: null,
-                // 修改：增加 date 預設值，增加 note
                 newExpense: { title: '', amount: '', payer: '', currency: 'TWD', involved: ['我', '旅伴'], category: 'food', splitType: 'equal', customData: {}, photo: null, note: '', date: new Date().toISOString().split('T')[0] },
                 externalLinks: [], newLink: { title: '', url: '' },
                 wishlist: [], newWishItem: { name: '', url: '', address: '', note: '', day: 'all' },
@@ -597,7 +596,6 @@
                 showDayManager: false, 
                 dayColorPresets: ['#8b5e3c', '#d65d7a', '#4a7a8c', '#5e7e5e', '#b08d73', '#7ca5b8', '#d68c8c', '#9ea6b3'],
                 weatherData: null, chartInstance: null, isMapUpdating: false, localOrder: [],
-                // 新增：Changelog 相關
                 showChangelog: false, changelog: [],
                 themePresets: { wood: { '--bg-body': '#fdfcf8', '--bg-card': '#ffffff', '--theme-main': '#8b5e3c', '--theme-light': '#f0e6dd', '--theme-accent': '#b08d73', '--text-main': '#4a4036', '--text-sub': '#968c83', '--danger': '#d68c8c', '--link-blue': '#7ca5b8' }, sakura: { '--bg-body': '#fff5f7', '--bg-card': '#ffffff', '--theme-main': '#d65d7a', '--theme-light': '#ffe4e8', '--theme-accent': '#f4a6b5', '--text-main': '#5c3a41', '--text-sub': '#9e7e85', '--danger': '#ff6b6b', '--link-blue': '#7ca5b8' }, ocean: { '--bg-body': '#f0f8ff', '--bg-card': '#ffffff', '--theme-main': '#4a7a8c', '--theme-light': '#dcedf5', '--theme-accent': '#7fb0c2', '--text-main': '#2c3e50', '--text-sub': '#7f8c8d', '--danger': '#e74c3c', '--link-blue': '#7ca5b8' }, matcha: { '--bg-body': '#f6f9f6', '--bg-card': '#ffffff', '--theme-main': '#5e7e5e', '--theme-light': '#ddeedd', '--theme-accent': '#8daf8d', '--text-main': '#2d382d', '--text-sub': '#889988', '--danger': '#c45c5c', '--link-blue': '#7ca5b8' }, night: { '--bg-body': '#1a1a1a', '--bg-card': '#2a2a2a', '--theme-main': '#e0e0e0', '--theme-light': '#444444', '--theme-accent': '#666666', '--text-main': '#e0e0e0', '--text-sub': '#999999', '--danger': '#ff5555', '--link-blue': '#7ca5b8' } }
             }
@@ -633,7 +631,84 @@
             },
             categoryAnalysis() { return this.calcAnalysis(); },
             groupedExpenses() { const groups = {}; this.expenses.forEach((exp, index) => { const dateKey = exp.date ? exp.date.split(' ')[0] : '其他'; if (!groups[dateKey]) { groups[dateKey] = { items: [] }; } groups[dateKey].items.push({ data: exp, originalIndex: index }); }); return Object.keys(groups).sort((a, b) => b.localeCompare(a)).reduce((obj, key) => { obj[key] = groups[key]; return obj; }, {}); },
-            settlementPlan() { if (!this.members.length) return []; let balances = {}; this.members.forEach(m => balances[m] = 0); this.expenses.forEach(exp => { let rate = this.rates[exp.currency] || 1; let valInTWD = exp.amount * rate; if (balances[exp.payer] !== undefined) balances[exp.payer] += valInTWD; if (exp.splitType === 'custom' && exp.customData) { for (let m in exp.customData) { if (this.members.includes(m)) { let share = (exp.customData[m] || 0) * rate; if (balances[m] !== undefined) balances[m] -= share; } } } else { let involved = (exp.involved || []).filter(m => this.members.includes(m)); if (involved.length > 0) { let split = valInTWD / involved.length; involved.forEach(m => { if (balances[m] !== undefined) balances[m] -= split; }); } } }); let debtors = []; let creditors = []; for (const [name, amount] of Object.entries(balances)) { if (amount < -1) debtors.push({ name, amount: amount }); else if (amount > 1) creditors.push({ name, amount: amount }); } debtors.sort((a, b) => a.amount - b.amount); creditors.sort((a, b) => b.amount - a.amount); let transactions = []; let i = 0, j = 0; while (i < debtors.length && j < creditors.length) { let debtor = debtors[i], creditor = creditors[j]; let amount = Math.min(Math.abs(debtor.amount), creditor.amount); let targetRate = this.rates[this.displayCurrency] || 1; transactions.push({ from: debtor.name, to: creditor.name, amount: Math.round(amount / targetRate) }); debtor.amount += amount; creditor.amount -= amount; if (Math.abs(debtor.amount) < 1) i++; if (creditor.amount < 1) j++; } return transactions; }
+            settlementPlan() {
+                if (!this.members.length) return [];
+                let balances = {};
+                this.members.forEach(m => balances[m] = 0);
+
+                this.expenses.forEach(exp => {
+                    const rate = parseFloat(this.rates[exp.currency] || 1);
+                    const payer = exp.payer;
+                    if (!this.members.includes(payer)) return;
+
+                    // 1. 計算該筆消費的台幣總額 (以此為運算基準)
+                    let totalValTWD = 0;
+                    if (exp.splitType === 'custom' && exp.customData) {
+                        // 自定義模式下，以所有成員填寫的金額總和為準
+                        for (let m in exp.customData) {
+                            if (this.members.includes(m)) {
+                                totalValTWD += parseFloat(exp.customData[m] || 0) * rate;
+                            }
+                        }
+                    } else {
+                        totalValTWD = parseFloat(exp.amount || 0) * rate;
+                    }
+
+                    // 2. 付款人先拿回整筆台幣金額 (Credit)
+                    balances[payer] += totalValTWD;
+
+                    // 3. 參與者根據分擔方式扣除金額 (Debit)
+                    if (exp.splitType === 'custom' && exp.customData) {
+                        for (let m in exp.customData) {
+                            if (this.members.includes(m)) {
+                                balances[m] -= parseFloat(exp.customData[m] || 0) * rate;
+                            }
+                        }
+                    } else {
+                        let involved = (exp.involved || []).filter(m => this.members.includes(m));
+                        if (involved.length > 0) {
+                            let splitTWD = totalValTWD / involved.length;
+                            involved.forEach(m => {
+                                balances[m] -= splitTWD;
+                            });
+                        }
+                    }
+                });
+
+                // 4. 媒合債務
+                let debtors = [];
+                let creditors = [];
+                const epsilon = 0.1; // 容許誤差
+
+                for (const [name, amount] of Object.entries(balances)) {
+                    if (amount < -epsilon) debtors.push({ name, amount: amount });
+                    else if (amount > epsilon) creditors.push({ name, amount: amount });
+                }
+
+                debtors.sort((a, b) => a.amount - b.amount);
+                creditors.sort((a, b) => b.amount - a.amount);
+
+                let transactions = [];
+                let i = 0, j = 0;
+                while (i < debtors.length && j < creditors.length) {
+                    let debtor = debtors[i], creditor = creditors[j];
+                    let amountTWD = Math.min(Math.abs(debtor.amount), creditor.amount);
+                    
+                    const targetRate = parseFloat(this.rates[this.displayCurrency] || 1);
+                    transactions.push({ 
+                        from: debtor.name, 
+                        to: creditor.name, 
+                        amount: Math.round(amountTWD / targetRate) 
+                    });
+
+                    debtor.amount += amountTWD;
+                    creditor.amount -= amountTWD;
+
+                    if (Math.abs(debtor.amount) < epsilon) i++;
+                    if (creditor.amount < epsilon) j++;
+                }
+                return transactions;
+            }
         },
         mounted() { this.loadTripList(); setTimeout(() => { if(this.isLoading) this.isLoading = false; }, 5000); },
         methods: {
@@ -675,15 +750,34 @@
             calcAnalysis() {
                 const map = { 'food': { label: '美食', chartColor: '#fca5a5' }, 'transport': { label: '交通', chartColor: '#93c5fd' }, 'ticket': { label: '門票', chartColor: '#d8b4fe' }, 'entertainment': { label: '娛樂', chartColor: '#fcd34d' }, 'accommodation': { label: '住宿', chartColor: '#86efac' }, 'other': { label: '其他', chartColor: '#d1d5db' } };
                 let stats = {}; Object.keys(map).forEach(k => stats[k] = 0);
-                let totalFiltered = 0; const targetRate = this.rates[this.analysisCurrency] || 1;
+                let totalFilteredTWD = 0; 
+                const targetRate = parseFloat(this.rates[this.analysisCurrency] || 1);
+
                 this.expenses.forEach(exp => { 
-                    let rate = this.rates[exp.currency] || 1; let valInTWD = exp.amount * rate; let cat = exp.category || 'other';
-                    let amountToAdd = 0;
-                    if (this.analysisFilter === 'all') amountToAdd = valInTWD;
-                    else { if (exp.splitType === 'custom' && exp.customData) amountToAdd = (exp.customData[this.analysisFilter] || 0) * rate; else if ((exp.involved || []).includes(this.analysisFilter)) amountToAdd = valInTWD / exp.involved.length; }
-                    stats[cat] += amountToAdd; totalFiltered += amountToAdd;
+                    const rate = parseFloat(this.rates[exp.currency] || 1);
+                    const cat = exp.category || 'other';
+                    let amountTWD = 0;
+
+                    if (this.analysisFilter === 'all') {
+                        amountTWD = parseFloat(exp.amount || 0) * rate;
+                    } else { 
+                        if (exp.splitType === 'custom' && exp.customData) {
+                            amountTWD = parseFloat(exp.customData[this.analysisFilter] || 0) * rate;
+                        } else if ((exp.involved || []).includes(this.analysisFilter)) {
+                            amountTWD = (parseFloat(exp.amount || 0) * rate) / (exp.involved.length || 1);
+                        } 
+                    }
+                    stats[cat] += amountTWD; 
+                    totalFilteredTWD += amountTWD;
                 });
-                return Object.keys(stats).map(key => ({ key, label: map[key].label, chartColor: map[key].chartColor, amount: Math.round(stats[key] / targetRate), percent: totalFiltered > 0 ? Math.round((stats[key] / totalFiltered) * 100) : 0 })).filter(item => item.amount > 0).sort((a, b) => b.amount - a.amount);
+
+                return Object.keys(stats).map(key => ({ 
+                    key, 
+                    label: map[key].label, 
+                    chartColor: map[key].chartColor, 
+                    amount: Math.round(stats[key] / targetRate), 
+                    percent: totalFilteredTWD > 0 ? Math.round((stats[key] / totalFilteredTWD) * 100) : 0 
+                })).filter(item => item.amount > 0).sort((a, b) => b.amount - a.amount);
             },
             renderChart() {
                 const ctx = document.getElementById('expenseChart'); if (!ctx) return;
@@ -730,7 +824,7 @@
                         }))
                     }));
                     this.members = d.members || ['我', '旅伴']; this.expenses = d.expenses || []; this.wishlist = d.wishlist || []; this.packingList = d.packingList || {}; this.externalLinks = d.externalLinks || [];
-                    this.changelog = d.changelog || []; // 恢復 changelog
+                    this.changelog = d.changelog || []; 
                     this.startDate = d.startDate || ''; this.applyTheme(d.theme || 'wood');
                     this.isLoading = false; this.showSidebar = false;
                     this.$nextTick(() => { if(this.currentTab === 'schedule') this.retryInitMap(0); if(this.currentTab === 'expenses') this.renderChart(); });
@@ -745,11 +839,11 @@
                 this.statusMessage = 'Saved ' + new Date().toLocaleTimeString();
             },
             moveActivity(index, direction) { const list = this.days[this.currentDayIndex].activities; if (direction === -1 && index > 0) [list[index], list[index-1]] = [list[index-1], list[index]]; else if (direction === 1 && index < list.length - 1) [list[index], list[index+1]] = [list[index+1], list[index]]; this.saveData(); this.$nextTick(() => this.updateMapRoute()); },
-            getSplitDetails(exp) { let details = []; let involved = (exp.involved || []).filter(m => this.members.includes(m)); if (exp.splitType === 'custom' && exp.customData) { for (let name in exp.customData) if (this.members.includes(name) && exp.customData[name] > 0) details.push({ name, amount: exp.customData[name] }); } else if (involved.length > 0) { let per = Math.round(exp.amount / involved.length * 100) / 100; involved.forEach(name => details.push({ name, amount: per })); } return details; },
+            getSplitDetails(exp) { let details = []; let involved = (exp.involved || []).filter(m => this.members.includes(m)); if (exp.splitType === 'custom' && exp.customData) { for (let name in exp.customData) if (this.members.includes(name) && exp.customData[name] > 0) details.push({ name, amount: exp.customData[name] }); } else if (involved.length > 0) { let per = Math.round(parseFloat(exp.amount || 0) / involved.length * 100) / 100; involved.forEach(name => details.push({ name, amount: per })); } return details; },
             toggleExpandHistory(index) { const idx = this.expandedHistoryIndices.indexOf(index); if (idx > -1) this.expandedHistoryIndices.splice(idx, 1); else this.expandedHistoryIndices.push(index); },
             isExpanded(index) { return this.expandedHistoryIndices.includes(index); },
             changeSplitMode(mode) { this.splitMode = mode; if(mode === 'custom') { this.customSplitAmounts = {}; this.members.forEach(m => this.customSplitAmounts[m] = 0); this.newExpense.amount = 0; } },
-            updateTotalFromCustom() { let sum = 0; for (let key in this.customSplitAmounts) sum += (this.customSplitAmounts[key] || 0); this.newExpense.amount = sum; },
+            updateTotalFromCustom() { let sum = 0; for (let key in this.customSplitAmounts) sum += (parseFloat(this.customSplitAmounts[key]) || 0); this.newExpense.amount = sum; },
             getDateLabel(index) { if (!this.startDate) return ''; const start = new Date(this.startDate); start.setDate(start.getDate() + index); return (start.getMonth() + 1) + '/' + start.getDate(); },
             getCategoryIcon(cat) { const icons = { 'food': '🍴', 'transport': '🚅', 'ticket': '🎫', 'entertainment': '🎡', 'accommodation': '🏨', 'other': '📦' }; return icons[cat] || '📦'; },
             toggleInvolved(member) { const idx = this.newExpense.involved.indexOf(member); if (idx > -1) this.newExpense.involved.splice(idx, 1); else this.newExpense.involved.push(member); },
@@ -761,7 +855,6 @@
                 reader.onload = (e) => { this.newExpense.photo = e.target.result; };
                 reader.readAsDataURL(file);
             },
-            // 新增：Changelog 紀錄功能
             addChangelog(action, title) {
                 const now = new Date();
                 const log = {
@@ -776,7 +869,6 @@
                 const exp = this.expenses[idx];
                 this.editingExpenseIndex = idx;
                 this.newExpense = JSON.parse(JSON.stringify(exp));
-                // 確保 date 欄位有值（舊紀錄可能沒有）
                 if(!this.newExpense.date) this.newExpense.date = new Date().toISOString().split('T')[0];
                 this.splitMode = exp.splitType || 'equal';
                 if (this.splitMode === 'custom') {
@@ -794,20 +886,20 @@
                 this.customSplitAmounts = {};
             },
             addExpense() { 
-                if(this.newExpense.title && this.newExpense.amount && this.newExpense.payer) { 
+                if(this.newExpense.title && (this.newExpense.amount !== '') && this.newExpense.payer) { 
                     let record = JSON.parse(JSON.stringify(this.newExpense)); 
+                    record.amount = parseFloat(record.amount);
                     record.splitType = this.splitMode; 
                     if (this.splitMode === 'custom') record.customData = JSON.parse(JSON.stringify(this.customSplitAmounts));
                     
                     if (this.editingExpenseIndex !== null) {
                         this.expenses[this.editingExpenseIndex] = record;
-                        this.addChangelog('EDIT', record.title); // 紀錄日誌
+                        this.addChangelog('EDIT', record.title);
                         this.editingExpenseIndex = null;
                     } else {
-                        // 如果用戶沒改日期，預設就是今天
                         if(!record.date) record.date = new Date().toISOString().split('T')[0];
                         this.expenses.push(record); 
-                        this.addChangelog('ADD', record.title); // 紀錄日誌
+                        this.addChangelog('ADD', record.title);
                     }
                     
                     this.newExpense = { title: '', amount: '', payer: '', currency: 'TWD', involved: [...this.members], category: 'food', splitType: 'equal', customData: {}, photo: null, note: '', date: new Date().toISOString().split('T')[0] }; 
@@ -819,7 +911,7 @@
                 if (confirm("確定刪除紀錄？")) { 
                     const title = this.expenses[idx].title;
                     this.expenses.splice(idx, 1); 
-                    this.addChangelog('DELETE', title); // 紀錄日誌
+                    this.addChangelog('DELETE', title);
                     this.saveData(); 
                 } 
             },
@@ -851,7 +943,19 @@
             deleteDay() { if(confirm('刪除此日？')) { this.days.splice(this.currentDayIndex, 1); if(this.days.length === 0) this.days.push({activities:[], dailyNote: '', color: ''}); this.currentDayIndex = Math.max(0, this.currentDayIndex - 1); this.saveData(); } },
             addActivity() { if (!this.days[this.currentDayIndex].activities) this.days[this.currentDayIndex].activities = []; this.days[this.currentDayIndex].activities.push({ time: '10:00', place: '', note: '', type: 'sightseeing', transportToNext: '', showTransportInput: false, link: '' }); this.saveData(); },
             initAutocomplete(index, event) { const input = event.target; if (input.dataset.autocompleteInit) return; try { const autocomplete = new google.maps.places.Autocomplete(input); autocomplete.addListener('place_changed', () => { const place = autocomplete.getPlace(); if (place.name) { this.days[this.currentDayIndex].activities[index].place = place.name; this.saveData(); this.updateMapRoute(); } }); input.dataset.autocompleteInit = 'true'; } catch (e) {} },
-            settleDebt(trans) { if (!confirm(`確定結清 ${trans.from} 給 ${trans.to} 的 ${trans.amount} 元？`)) return; this.expenses.push({ title: `結清: ${trans.from} → ${trans.to}`, amount: trans.amount, currency: this.displayCurrency, payer: trans.from, involved: [trans.to], category: 'other', date: new Date().toLocaleDateString() }); this.saveData(); },
+            settleDebt(trans) { 
+                if (!confirm(`確定結清 ${trans.from} 給 ${trans.to} 的 ${trans.amount} 元？`)) return; 
+                this.expenses.push({ 
+                    title: `結清: ${trans.from} → ${trans.to}`, 
+                    amount: parseFloat(trans.amount), 
+                    currency: this.displayCurrency, 
+                    payer: trans.from, 
+                    involved: [trans.to], 
+                    category: 'other', 
+                    date: new Date().toISOString().split('T')[0] 
+                }); 
+                this.saveData(); 
+            },
             handleActivityLink(item) { if (item.link) window.open(item.link, '_blank'); else { const url = prompt("輸入網址:", "https://"); if (url) { item.link = url; this.saveData(); } } }
         }
     }).mount('#app');
