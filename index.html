@@ -31,6 +31,10 @@
         .custom-scroll::-webkit-scrollbar-track { background: var(--theme-light); border-radius: 4px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: var(--theme-accent); border-radius: 4px; }
 
+        /* 隱藏長文字滑動條但保持功能 */
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
         button, input, select, textarea { outline: none; -webkit-tap-highlight-color: transparent; }
         .time-select { appearance: none; background-color: transparent; text-align: center; font-family: 'Montserrat', sans-serif; font-weight: 600; color: var(--text-main); border-radius: 4px; padding: 0; cursor: pointer; }
         
@@ -430,34 +434,38 @@
                     <div v-for="(group, dateKey) in groupedExpenses" :key="dateKey">
                         <div @click="toggleDateGroup(dateKey)" class="cursor-pointer flex items-center gap-2 text-[10px] font-bold text-[var(--text-sub)] tracking-wider mb-4 pl-1 border-b border-[var(--theme-light)] pb-1 w-fit hover:text-[var(--theme-main)] transition">{{ dateKey }} <span class="transition-transform duration-300" :class="{'rotate-180': collapsedDates[dateKey]}">▼</span></div>
                         <div v-show="!collapsedDates[dateKey]" class="space-y-2 animate-fade">
-                            <!-- 佈局優化重點：使用 flex justify-between 與 min-w-0 防止文字溢出 -->
                             <div v-for="item in group.items" :key="item.originalIndex" @click="toggleExpandHistory(item.originalIndex)" :class="isExpanded(item.originalIndex) ? 'border-[var(--theme-light)]' : 'border-transparent'" class="bg-[var(--bg-card)] p-3 rounded-lg border group hover:border-[var(--theme-accent)] transition relative cursor-pointer">
+                                <!-- 修改佈局：確保按鈕與金額不再與文字重疊，且長文字可滑動 -->
                                 <div class="flex justify-between items-start gap-3">
-                                    <div class="flex gap-3 min-w-0 flex-1 pr-12"> <!-- pr-12 預留給右上角的編輯按鈕 -->
+                                    <div class="flex gap-3 min-w-0 flex-1">
                                         <div class="text-xl bg-[var(--bg-body)] w-10 h-10 flex items-center justify-center rounded-lg border border-[var(--theme-light)] shrink-0">{{ getCategoryIcon(item.data.category) }}</div>
                                         <div class="min-w-0 flex-1">
-                                            <div class="text-[var(--text-main)] text-sm font-medium leading-tight truncate">{{ item.data.title }}</div>
-                                            <div v-if="item.data.note" class="text-[9px] text-[var(--text-sub)] italic mt-0.5 truncate">{{ item.data.note }}</div>
-                                            <div class="text-[10px] text-[var(--text-sub)] mt-1 truncate">{{ item.data.payer }} 付 · {{ item.data.currency }} {{ item.data.amount }}</div>
+                                            <!-- 文字左右滑動邏輯 hide-scrollbar 確保整潔 -->
+                                            <div class="overflow-x-auto whitespace-nowrap hide-scrollbar">
+                                                <div class="text-[var(--text-main)] text-sm font-medium leading-tight inline-block">{{ item.data.title }}</div>
+                                            </div>
+                                            <div v-if="item.data.note" class="overflow-x-auto whitespace-nowrap hide-scrollbar mt-0.5">
+                                                <div class="text-[9px] text-[var(--text-sub)] italic inline-block">{{ item.data.note }}</div>
+                                            </div>
+                                            <div class="text-[10px] text-[var(--text-sub)] mt-1 whitespace-nowrap">{{ item.data.payer }} 付 · {{ item.data.currency }} {{ item.data.amount }}</div>
                                         </div>
                                     </div>
-                                    <!-- 右側金額區：設定 shrink-0 保證不被壓縮 -->
-                                    <div class="flex flex-col items-end shrink-0 pt-0.5">
-                                        <div v-if="item.data.photo" @click.stop="previewPhotoUrl = item.data.photo" class="mb-1">
-                                            <img :src="item.data.photo" class="w-6 h-6 object-cover rounded shadow-sm hover:scale-110 transition border border-white">
+                                    <!-- 右側功能區：包含按鈕與金額，確保不重疊 -->
+                                    <div class="flex flex-col items-end shrink-0">
+                                        <div class="flex gap-1 mb-2">
+                                            <button @click.stop="editExpenseRecord(item.originalIndex)" class="text-[var(--text-sub)] hover:text-[var(--theme-main)] p-1.5 transition rounded-full bg-[var(--theme-light)]/30"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" /></svg></button>
+                                            <button @click.stop="deleteExpense(item.originalIndex)" class="text-[var(--text-sub)] hover:text-[var(--danger)] p-1.5 transition rounded-full bg-[var(--theme-light)]/30"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" /></svg></button>
                                         </div>
-                                        <span class="font-en text-sm text-[var(--text-main)] font-medium">{{ item.data.currency }} {{ item.data.amount }}</span>
-                                        <span v-if="item.data.currency !== 'TWD'" class="text-[10px] text-[#dccbba] font-en">≈ TWD {{ Math.round(item.data.amount * (rates[item.data.currency] || 1)) }}</span>
+                                        <div class="flex flex-col items-end">
+                                            <div v-if="item.data.photo" @click.stop="previewPhotoUrl = item.data.photo" class="mb-1">
+                                                <img :src="item.data.photo" class="w-6 h-6 object-cover rounded shadow-sm hover:scale-110 transition border border-white">
+                                            </div>
+                                            <span class="font-en text-sm text-[var(--text-main)] font-medium">{{ item.data.currency }} {{ item.data.amount }}</span>
+                                            <span v-if="item.data.currency !== 'TWD'" class="text-[10px] text-[#dccbba] font-en whitespace-nowrap">≈ TWD {{ Math.round(item.data.amount * (rates[item.data.currency] || 1)) }}</span>
+                                        </div>
                                     </div>
                                 </div>
-                                
                                 <div v-if="isExpanded(item.originalIndex)" class="mt-3 pt-3 border-t border-dashed border-[var(--theme-light)] bg-[var(--bg-body)] -mx-3 -mb-3 px-3 pb-3 rounded-b-lg animate-fade-in"><p class="text-[10px] font-bold text-[var(--theme-accent)] mb-2">分擔明細:</p><div class="grid grid-cols-2 gap-2"><div v-for="detail in getSplitDetails(item.data)" :key="detail.name" class="flex justify-between text-[10px] bg-[var(--bg-card)] px-2 py-1 rounded border border-[var(--theme-light)]"><span class="text-[var(--text-main)] truncate mr-1">{{ detail.name }}</span><span class="font-en text-[var(--wood-dark)]">{{ detail.amount }}</span></div></div></div>
-                                
-                                <!-- 按鈕定位 -->
-                                <div class="absolute top-2 right-2 flex flex-col gap-1">
-                                    <button @click.stop="editExpenseRecord(item.originalIndex)" class="text-[var(--text-sub)] hover:text-[var(--theme-main)] p-1.5 transition rounded-full hover:bg-[var(--theme-light)]/50"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" /></svg></button>
-                                    <button @click.stop="deleteExpense(item.originalIndex)" class="text-[var(--text-sub)] hover:text-[var(--danger)] p-1.5 transition rounded-full hover:bg-[var(--theme-light)]/50"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" /></svg></button>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -606,7 +614,7 @@
             groupedExpenses() { const groups = {}; this.expenses.forEach((exp, index) => { const dateKey = exp.date ? exp.date.split(' ')[0] : '其他'; if (!groups[dateKey]) { groups[dateKey] = { items: [] }; } groups[dateKey].items.push({ data: exp, originalIndex: index }); }); return Object.keys(groups).sort((a, b) => b.localeCompare(a)).reduce((obj, key) => { obj[key] = groups[key]; return obj; }, {}); },
             settlementPlan() { if (!this.members.length) return []; let balances = {}; this.members.forEach(m => balances[m] = 0); this.expenses.forEach(exp => { let rate = this.rates[exp.currency] || 1; let valInTWD = exp.amount * rate; if (balances[exp.payer] !== undefined) balances[exp.payer] += valInTWD; if (exp.splitType === 'custom' && exp.customData) { for (let m in exp.customData) { if (this.members.includes(m)) { let share = (exp.customData[m] || 0) * rate; if (balances[m] !== undefined) balances[m] -= share; } } } else { let involved = (exp.involved || []).filter(m => this.members.includes(m)); if (involved.length > 0) { let split = valInTWD / involved.length; involved.forEach(m => { if (balances[m] !== undefined) balances[m] -= split; }); } } }); let debtors = []; let creditors = []; for (const [name, amount] of Object.entries(balances)) { if (amount < -1) debtors.push({ name, amount: amount }); else if (amount > 1) creditors.push({ name, amount: amount }); } debtors.sort((a, b) => a.amount - b.amount); creditors.sort((a, b) => b.amount - a.amount); let transactions = []; let i = 0, j = 0; while (i < debtors.length && j < creditors.length) { let debtor = debtors[i], creditor = creditors[j]; let amount = Math.min(Math.abs(debtor.amount), creditor.amount); let targetRate = this.rates[this.displayCurrency] || 1; transactions.push({ from: debtor.name, to: creditor.name, amount: Math.round(amount / targetRate) }); debtor.amount += amount; creditor.amount -= amount; if (Math.abs(debtor.amount) < 1) i++; if (creditor.amount < 1) j++; } return transactions; }
         },
-        mounted() { this.loadTripList(); window.gm_authFailure = () => { this.mapError = true; }; setTimeout(() => { if(this.isLoading) this.isLoading = false; }, 5000); },
+        mounted() { this.loadTripList(); setTimeout(() => { if(this.isLoading) this.isLoading = false; }, 5000); },
         methods: {
             autoGrow(element) { element.style.height = "auto"; element.style.height = (element.scrollHeight) + "px"; },
             toggleDateGroup(dateKey) { this.collapsedDates[dateKey] = !this.collapsedDates[dateKey]; },
