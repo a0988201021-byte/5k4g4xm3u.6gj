@@ -191,29 +191,25 @@
                     <div v-for="(trip, index) in sortedTrips" :key="trip.id" 
                          @click="openTrip(trip.id)" 
                          :class="currentTripId === trip.id ? 'border-[var(--theme-main)] bg-[var(--bg-card)] shadow-md' : 'border-transparent hover:bg-[var(--bg-card)] border-[var(--theme-light)]'" 
-                         class="flex items-stretch rounded-xl border bg-[var(--bg-card)] overflow-hidden transition cursor-pointer group mb-2 relative">
-                        <div class="flex-1 p-3 flex flex-col justify-between min-w-0 relative pb-8">
-                            <div>
-                                <div class="font-bold text-[var(--text-main)] text-sm truncate">{{ trip.tripName || '未命名行程' }}</div>
-                                <div class="text-[10px] text-[var(--text-sub)] mt-1 font-en">{{ trip.startDate || '無日期' }}</div>
-                            </div>
-                            <div class="absolute bottom-2 right-2 flex items-center gap-2 z-20">
-                                <button type="button" @click.stop="openTripSettings(trip.id)" class="text-[var(--text-sub)] hover:text-[var(--theme-main)] text-[10px] p-1 bg-[var(--bg-card)]/80 rounded hover:scale-110 transition">⚙️</button>
-                                <button type="button" @click.stop="confirmDeleteTrip(trip.id)" class="text-[var(--text-sub)] hover:text-[var(--danger)] p-1 bg-[var(--bg-card)]/80 rounded pointer-events-auto hover:scale-110 transition">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-3.5 h-3.5 pointer-events-none"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" /></svg>
-                                </button>
-                            </div>
+                         class="flex items-stretch rounded-xl border bg-[var(--bg-card)] overflow-hidden transition cursor-pointer group mb-2 relative p-3">
+                        <div class="flex-1 min-w-0 pb-6">
+                            <div class="font-bold text-[var(--text-main)] text-sm truncate">{{ trip.tripName || '未命名行程' }}</div>
+                            <div class="text-[10px] text-[var(--text-sub)] mt-1 font-en">{{ trip.startDate || '無日期' }}</div>
                         </div>
-                        <div class="w-4 bg-[var(--theme-light)]/30 border-l border-[var(--theme-light)] flex flex-col justify-center items-center gap-1 text-[var(--theme-accent)]" @click.stop>
-                            <button type="button" @click.stop="moveTripBook(index, -1)" class="hover:text-[var(--theme-main)] p-0.5 disabled:opacity-30" :disabled="index === 0">▲</button>
-                            <button type="button" @click.stop="moveTripBook(index, 1)" class="hover:text-[var(--theme-main)] p-0.5 disabled:opacity-30" :disabled="index === sortedTrips.length - 1">▼</button>
+                        <div class="absolute bottom-2 right-2 flex items-center gap-2">
+                             <button @click.stop="openTripSettings(trip.id)" class="text-[10px] p-1 bg-white/80 rounded">⚙️</button>
+                             <button @click.stop="confirmDeleteTrip(trip.id)" class="text-[var(--danger)] p-1 bg-white/80 rounded">
+                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-3.5 h-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" /></svg>
+                             </button>
+                        </div>
+                        <div class="w-4 bg-[var(--theme-light)]/30 border-l border-[var(--theme-light)] flex flex-col justify-center items-center gap-1">
+                            <button @click.stop="moveTripBook(index, -1)" class="text-[10px]" :disabled="index === 0">▲</button>
+                            <button @click.stop="moveTripBook(index, 1)" class="text-[10px]" :disabled="index === sortedTrips.length - 1">▼</button>
                         </div>
                     </div>
                 </div>
                 <div class="p-4 border-t border-[var(--theme-light)]">
-                    <button @click="createNewTrip" class="w-full bg-[var(--theme-main)] text-white py-3 rounded-xl font-bold shadow-md hover:bg-[var(--theme-accent)] transition flex justify-center gap-2 text-sm">
-                        <span>+</span> 建立新旅程
-                    </button>
+                    <button @click="createNewTrip" class="w-full bg-[var(--theme-main)] text-white py-3 rounded-xl font-bold shadow-md text-sm">+ 建立新旅程</button>
                 </div>
             </div>
         </div>
@@ -221,7 +217,7 @@
 
     <!-- Header -->
     <div class="sticky top-0 z-30 bg-[var(--bg-body)]/95 backdrop-blur-sm border-b border-[var(--theme-light)] p-4 transition-colors">
-        <button @click="showSidebar = true" class="absolute left-4 top-5 text-[var(--theme-main)] hover:text-[var(--theme-accent)] transition">
+        <button @click="showSidebar = true" class="absolute left-4 top-5 text-[var(--theme-main)]">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg>
         </button>
 
@@ -392,8 +388,12 @@
                 <div class="bg-[var(--bg-card)] rounded-xl border border-[var(--theme-light)] p-4 shadow-sm space-y-4">
                     <div class="flex gap-2">
                         <div class="relative w-1/3"><select v-model="newExpense.category" class="w-full appearance-none bg-[var(--bg-body)] border border-[var(--theme-light)] text-[var(--text-main)] text-[10px] font-bold rounded px-2 py-2 pr-6 outline-none"><option value="food">🍴 美食</option><option value="transport">🚅 交通</option><option value="ticket">🎫 門票</option><option value="entertainment">🎡 娛樂</option><option value="accommodation">🏨 住宿</option><option value="other">📦 其他</option></select><div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-[var(--text-sub)] text-[10px]">▼</div></div>
-                        <input v-model="newExpense.title" placeholder="項目" class="w-2/3 text-xs font-bold border-b border-[var(--theme-light)] pb-1 focus:border-[var(--theme-main)] transition text-[var(--text-main)] bg-transparent outline-none">
+                        <input v-model="newExpense.title" placeholder="項目名稱" class="w-2/3 text-xs font-bold border-b border-[var(--theme-light)] pb-1 focus:border-[var(--theme-main)] transition text-[var(--text-main)] bg-transparent outline-none">
                     </div>
+                    
+                    <!-- 恢復與新增：備註欄位 -->
+                    <input v-model="newExpense.note" placeholder="備註 (選填)" class="w-full text-[10px] text-[var(--text-sub)] border-b border-[var(--theme-light)] pb-1 focus:border-[var(--theme-main)] transition bg-transparent outline-none">
+
                     <div class="flex gap-2">
                         <div class="relative w-1/3"><select v-model="newExpense.currency" class="w-full appearance-none bg-[var(--bg-body)] border border-[var(--theme-light)] text-[var(--text-main)] text-[10px] font-bold rounded px-2 py-2 pr-6 outline-none font-en"><option value="TWD">🇹🇼 TWD</option><option value="JPY">🇯🇵 JPY</option><option value="USD">🇺🇸 USD</option><option value="EUR">🇪🇺 EUR</option></select><div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-[var(--text-sub)] text-[10px]">▼</div></div>
                         <input type="number" v-model.number="newExpense.amount" :readonly="splitMode === 'custom'" :class="splitMode === 'custom' ? 'bg-[var(--theme-light)]/30' : 'bg-[var(--bg-body)]'" placeholder="總金額" class="w-2/3 text-sm rounded px-3 py-2 text-[var(--text-main)] transition-colors outline-none">
@@ -435,7 +435,12 @@
                             <div v-for="item in group.items" :key="item.originalIndex" @click="toggleExpandHistory(item.originalIndex)" :class="isExpanded(item.originalIndex) ? 'border-[var(--theme-light)]' : 'border-transparent'" class="bg-[var(--bg-card)] p-3 rounded-lg border group hover:border-[var(--theme-accent)] transition relative cursor-pointer pr-10">
                                 <div class="flex justify-between items-start">
                                     <div class="flex gap-3"><div class="text-xl bg-[var(--bg-body)] w-10 h-10 flex items-center justify-center rounded-lg border border-[var(--theme-light)] shrink-0">{{ getCategoryIcon(item.data.category) }}</div>
-                                        <div><div class="text-[var(--text-main)] text-sm font-medium leading-tight pt-0.5">{{ item.data.title }}</div><div class="text-[10px] text-[var(--text-sub)] mt-1">{{ item.data.payer }} 付 · {{ item.data.currency }} {{ item.data.amount }}</div></div>
+                                        <div class="min-w-0 flex-1">
+                                            <div class="text-[var(--text-main)] text-sm font-medium leading-tight truncate">{{ item.data.title }}</div>
+                                            <!-- 顯示備註 -->
+                                            <div v-if="item.data.note" class="text-[9px] text-[var(--text-sub)] italic mt-0.5 truncate">{{ item.data.note }}</div>
+                                            <div class="text-[10px] text-[var(--text-sub)] mt-1">{{ item.data.payer }} 付 · {{ item.data.currency }} {{ item.data.amount }}</div>
+                                        </div>
                                     </div>
                                     <div class="flex flex-col items-end">
                                         <div v-if="item.data.photo" @click.stop="previewPhotoUrl = item.data.photo" class="mb-1">
@@ -457,7 +462,6 @@
             </div>
         </div>
 
-        <!-- 其餘區塊 (Wishlist, Links, Packing) 內容與原代碼完全一致，未縮減 -->
         <!-- PAGE 3: 購物美食 -->
         <div v-if="currentTab === 'wishlist'" class="space-y-6">
             <h3 class="section-title" style="padding-left:0;">SHOPPING & FOOD</h3>
@@ -548,7 +552,7 @@
                 analysisFilter: 'all', rates: { TWD: 1, JPY: 0.22, USD: 32.5, EUR: 35.0 },
                 expenses: [], splitMode: 'equal', customSplitAmounts: {},
                 editingExpenseIndex: null, previewPhotoUrl: null,
-                newExpense: { title: '', amount: '', payer: '', currency: 'TWD', involved: ['我', '旅伴'], category: 'food', splitType: 'equal', customData: {}, photo: null },
+                newExpense: { title: '', amount: '', payer: '', currency: 'TWD', involved: ['我', '旅伴'], category: 'food', splitType: 'equal', customData: {}, photo: null, note: '' },
                 externalLinks: [], newLink: { title: '', url: '' },
                 wishlist: [], newWishItem: { name: '', url: '', address: '', note: '', day: 'all' },
                 wishlistFilterDay: 'all', wishlistPage: 1, wishlistItemsPerPage: 10,
@@ -599,7 +603,7 @@
             groupedExpenses() { const groups = {}; this.expenses.forEach((exp, index) => { const dateKey = exp.date ? exp.date.split(' ')[0] : '其他'; if (!groups[dateKey]) { groups[dateKey] = { items: [] }; } groups[dateKey].items.push({ data: exp, originalIndex: index }); }); return Object.keys(groups).sort((a, b) => b.localeCompare(a)).reduce((obj, key) => { obj[key] = groups[key]; return obj; }, {}); },
             settlementPlan() { if (!this.members.length) return []; let balances = {}; this.members.forEach(m => balances[m] = 0); this.expenses.forEach(exp => { let rate = this.rates[exp.currency] || 1; let valInTWD = exp.amount * rate; if (balances[exp.payer] !== undefined) balances[exp.payer] += valInTWD; if (exp.splitType === 'custom' && exp.customData) { for (let m in exp.customData) { if (this.members.includes(m)) { let share = (exp.customData[m] || 0) * rate; if (balances[m] !== undefined) balances[m] -= share; } } } else { let involved = (exp.involved || []).filter(m => this.members.includes(m)); if (involved.length > 0) { let split = valInTWD / involved.length; involved.forEach(m => { if (balances[m] !== undefined) balances[m] -= split; }); } } }); let debtors = []; let creditors = []; for (const [name, amount] of Object.entries(balances)) { if (amount < -1) debtors.push({ name, amount: amount }); else if (amount > 1) creditors.push({ name, amount: amount }); } debtors.sort((a, b) => a.amount - b.amount); creditors.sort((a, b) => b.amount - a.amount); let transactions = []; let i = 0, j = 0; while (i < debtors.length && j < creditors.length) { let debtor = debtors[i], creditor = creditors[j]; let amount = Math.min(Math.abs(debtor.amount), creditor.amount); let targetRate = this.rates[this.displayCurrency] || 1; transactions.push({ from: debtor.name, to: creditor.name, amount: Math.round(amount / targetRate) }); debtor.amount += amount; creditor.amount -= amount; if (Math.abs(debtor.amount) < 1) i++; if (creditor.amount < 1) j++; } return transactions; }
         },
-        mounted() { this.loadTripList(); setTimeout(() => { if(this.isLoading) this.isLoading = false; }, 5000); },
+        mounted() { this.loadTripList(); window.gm_authFailure = () => { this.mapError = true; }; setTimeout(() => { if(this.isLoading) this.isLoading = false; }, 5000); },
         methods: {
             autoGrow(element) { element.style.height = "auto"; element.style.height = (element.scrollHeight) + "px"; },
             toggleDateGroup(dateKey) { this.collapsedDates[dateKey] = !this.collapsedDates[dateKey]; },
@@ -724,7 +728,6 @@
                 reader.onload = (e) => { this.newExpense.photo = e.target.result; };
                 reader.readAsDataURL(file);
             },
-            // 修改後的編輯紀錄功能：跳轉至輸入表單區塊
             editExpenseRecord(idx) {
                 const exp = this.expenses[idx];
                 this.editingExpenseIndex = idx;
@@ -733,7 +736,6 @@
                 if (this.splitMode === 'custom') {
                     this.customSplitAmounts = JSON.parse(JSON.stringify(exp.customData || {}));
                 }
-                // 優化：精確捲動至表單區塊
                 this.$nextTick(() => {
                     if (this.$refs.expenseForm) {
                         this.$refs.expenseForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -742,7 +744,7 @@
             },
             cancelEditExpense() {
                 this.editingExpenseIndex = null;
-                this.newExpense = { title: '', amount: '', payer: '', currency: 'TWD', involved: [...this.members], category: 'food', splitType: 'equal', customData: {}, photo: null };
+                this.newExpense = { title: '', amount: '', payer: '', currency: 'TWD', involved: [...this.members], category: 'food', splitType: 'equal', customData: {}, photo: null, note: '' };
                 this.customSplitAmounts = {};
             },
             addExpense() { 
@@ -760,7 +762,7 @@
                         this.expenses.push(record); 
                     }
                     
-                    this.newExpense = { title: '', amount: '', payer: '', currency: 'TWD', involved: [...this.members], category: 'food', splitType: 'equal', customData: {}, photo: null }; 
+                    this.newExpense = { title: '', amount: '', payer: '', currency: 'TWD', involved: [...this.members], category: 'food', splitType: 'equal', customData: {}, photo: null, note: '' }; 
                     this.customSplitAmounts = {}; 
                     this.saveData(); 
                 } 
