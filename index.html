@@ -37,9 +37,6 @@
         button, input, select, textarea { outline: none; -webkit-tap-highlight-color: transparent; }
         .time-select { appearance: none; background-color: transparent; text-align: center; font-family: 'Montserrat', sans-serif; font-weight: 600; color: var(--text-main); border-radius: 4px; padding: 0; cursor: pointer; }
         
-        .rotate-180 { transform: rotate(180deg); }
-        .transition-transform { transition: transform 0.3s ease; }
-        
         .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-card); opacity: 0.95; z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column; }
         .loading-spinner { border: 4px solid var(--theme-light); border-top: 4px solid var(--theme-main); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -47,44 +44,32 @@
         .slide-enter-active, .slide-leave-active { transition: transform 0.3s ease; }
         .slide-enter-from, .slide-leave-to { transform: translateX(-100%); }
         .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
-        .fade-enter-from, .fade-leave-to { opacity: 0; }
 
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(2px); z-index: 100; display: flex; justify-content: center; align-items: center; padding: 20px; }
         .modal-card { background: var(--bg-card); padding: 20px; border-radius: 16px; width: 100%; max-width: 320px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border: 1px solid var(--theme-light); }
         
         .color-dot { width: 28px; height: 28px; border-radius: 50%; cursor: pointer; border: 2px solid var(--theme-light); transition: transform 0.2s; }
-        .color-dot.active { border-color: var(--text-main); transform: scale(1.2); box-shadow: 0 0 8px rgba(0,0,0,0.1); }
+        .color-dot.active { border-color: var(--text-main); transform: scale(1.2); }
         
         .day-tab { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border-width: 2px; }
         .day-tab.active { transform: scale(1.05); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
         .color-picker-dot { width: 20px; height: 20px; border-radius: 4px; cursor: pointer; border: 1px solid rgba(0,0,0,0.1); flex-shrink: 0; transition: transform 0.1s; }
 
-        .map-error-msg { position: absolute; inset: 0; background: #f8d7da; color: #721c24; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; text-align: center; font-size: 12px; z-index: 10; border-radius: 12px; }
-        
         .custom-checkbox { appearance: none; -webkit-appearance: none; width: 20px; height: 20px; border: 2px solid var(--theme-light); border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; background-color: transparent; }
-        .custom-checkbox:checked { background-color: transparent; border-color: #666666; }
-        .custom-checkbox:checked::after { content: '✔'; color: #666666; font-size: 14px; font-weight: bold; }
+        .custom-checkbox:checked::after { content: '✔'; color: #666; font-size: 14px; font-weight: bold; }
 
-        .analysis-select { font-family: 'Montserrat', sans-serif !important; font-weight: 700; font-size: 10px; background-color: rgba(240, 230, 221, 0.3); border-radius: 0.5rem; padding: 0.25rem 0.5rem; outline: none; border: 1px solid var(--theme-light); color: var(--text-main); cursor: pointer; text-transform: uppercase; letter-spacing: 0.05em; }
-        .packing-member-select { @apply text-[10px] font-bold bg-[var(--theme-light)]/30 rounded-lg px-2 py-1 outline-none border border-[var(--theme-light)] text-[var(--text-main)] cursor-pointer hover:bg-[var(--theme-light)]/50 transition tracking-wide; font-family: 'Montserrat', sans-serif !important; }
+        .analysis-select { font-family: 'Montserrat', sans-serif !important; font-weight: 700; font-size: 10px; background-color: rgba(240, 230, 221, 0.3); border-radius: 0.5rem; padding: 0.25rem 0.5rem; outline: none; border: 1px solid var(--theme-light); color: var(--text-main); cursor: pointer; }
+        .packing-member-select { @apply text-[10px] font-bold bg-[var(--theme-light)]/30 rounded-lg px-2 py-1 outline-none border border-[var(--theme-light)] text-[var(--text-main)] cursor-pointer; }
 
         .section-header { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 0.5rem 0.25rem; margin-bottom: 0.5rem; cursor: pointer; user-select: none; }
-        .section-title { font-family: 'Montserrat', sans-serif !important; font-weight: 700 !important; font-size: 0.75rem !important; color: var(--text-sub) !important; letter-spacing: 0.1em !important; text-transform: uppercase !important; padding-left: 0.25rem; }
-        .section-arrow { font-size: 10px; color: var(--text-sub); transition: transform 0.3s ease; }
+        .section-title { font-family: 'Montserrat', sans-serif !important; font-weight: 700; font-size: 0.75rem; color: var(--text-sub); letter-spacing: 0.1em; text-transform: uppercase; }
 
-        .settle-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; padding-top: 0.5rem; padding-bottom: 0.5rem; border-bottom: 1px dashed var(--theme-light); }
-        .settle-row:last-child { border-bottom: none; }
-        .settle-payer { flex: 1; text-align: right; font-weight: bold; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .settle-label { width: 40px; text-align: center; color: var(--danger); font-weight: bold; flex-shrink: 0; }
-        .settle-receiver { flex: 1; text-align: left; font-weight: bold; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .settle-amount { flex-shrink: 0; text-align: right; font-family: 'Montserrat', sans-serif; font-weight: bold; color: var(--theme-main); margin-left: 0.5rem; display: flex; align-items: center; gap: 4px; }
+        .settle-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; border-bottom: 1px dashed var(--theme-light); }
+        .settle-payer, .settle-receiver { flex: 1; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .settle-label { width: 40px; text-align: center; color: var(--danger); font-weight: bold; }
+        .settle-amount { text-align: right; font-weight: bold; color: var(--theme-main); }
 
         textarea { resize: vertical; overflow: hidden; }
-        textarea::-webkit-resizer { border-width: 8px; border-style: solid; border-color: transparent var(--theme-accent) var(--theme-accent) transparent; }
-        
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
-        .animate-fade { animation: fadeIn 0.3s ease-out forwards; }
     </style>
 </head>
 <body>
@@ -98,7 +83,7 @@
     </div>
 
     <!-- 照片全螢幕預覽 -->
-    <div v-if="previewPhotoUrl" class="modal-overlay" @click="previewPhotoUrl = null">
+    <div v-if="previewPhotoUrl" class="modal-overlay" @click="previewPhotoUrl = null" style="z-index: 200;">
         <div class="max-w-full max-h-full p-4">
             <img :src="previewPhotoUrl" class="rounded-xl shadow-2xl max-h-[80vh] object-contain mx-auto border-4 border-white">
         </div>
@@ -109,16 +94,33 @@
         <div class="modal-card">
             <h3 class="text-center font-bold text-[var(--theme-main)] mb-4">✏️ 編輯清單項目</h3>
             <div class="space-y-3">
-                <input v-model="editWishTemp.name" placeholder="名稱" class="w-full bg-[var(--bg-body)] border border-[var(--theme-light)] rounded-lg px-3 py-2 text-sm outline-none">
+                <input v-model="editWishTemp.name" class="w-full bg-[var(--bg-body)] border border-[var(--theme-light)] rounded-lg px-3 py-2 text-sm outline-none">
                 <select v-model="editWishTemp.day" class="w-full bg-[var(--bg-body)] border border-[var(--theme-light)] rounded-lg px-3 py-2 text-sm outline-none">
                     <option value="all">不指定日期</option>
                     <option v-for="(day, idx) in days" :key="idx" :value="idx">Day {{ idx + 1 }}</option>
                 </select>
                 <input v-model="editWishTemp.note" placeholder="備註" class="w-full bg-[var(--bg-body)] border border-[var(--theme-light)] rounded-lg px-3 py-2 text-sm outline-none">
+                <input v-model="editWishTemp.url" placeholder="連結 URL" class="w-full bg-[var(--bg-body)] border border-[var(--theme-light)] rounded-lg px-3 py-2 text-sm outline-none">
+                <input v-model="editWishTemp.address" placeholder="地址" class="w-full bg-[var(--bg-body)] border border-[var(--theme-light)] rounded-lg px-3 py-2 text-sm outline-none">
             </div>
             <div class="flex gap-2 mt-6">
-                <button @click="showWishEditModal = false" class="flex-1 py-2 text-xs text-[var(--text-sub)] hover:bg-[var(--theme-light)] rounded-lg transition">取消</button>
-                <button @click="saveWishItemEdit" class="flex-1 py-2 text-xs text-white bg-[var(--theme-main)] rounded-lg font-bold transition">確認儲存</button>
+                <button @click="showWishEditModal = false" class="flex-1 py-2 text-xs text-[var(--text-sub)] rounded-lg">取消</button>
+                <button @click="saveWishItemEdit" class="flex-1 py-2 text-xs text-white bg-[var(--theme-main)] rounded-lg font-bold">儲存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 行程設定 Modal -->
+    <div v-if="showSettingsModal" class="modal-overlay">
+        <div class="modal-card">
+            <h3 class="text-center font-bold text-[var(--theme-main)] mb-4">⚙️ 行程設定</h3>
+            <input v-model="editTemp.name" class="w-full bg-[var(--bg-body)] border border-[var(--theme-light)] rounded-lg px-3 py-2 text-sm outline-none mb-4">
+            <div class="flex justify-center gap-4 mb-6">
+                <div v-for="(theme, key) in themePresets" :key="key" class="color-dot" :class="{ active: editTemp.theme === key }" :style="{ backgroundColor: theme['--theme-main'] }" @click="previewTheme(key)"></div>
+            </div>
+            <div class="flex gap-2">
+                <button @click="showSettingsModal = false" class="flex-1 py-2 text-xs text-[var(--text-sub)] rounded-lg">取消</button>
+                <button @click="saveTripSettings" class="flex-1 py-2 text-xs text-white bg-[var(--theme-main)] rounded-lg font-bold">儲存</button>
             </div>
         </div>
     </div>
@@ -138,7 +140,6 @@
                     </div>
                     <div class="flex items-center bg-[var(--theme-light)]/30 rounded-lg px-1">
                         <button @click="moveDay(index, -1)" :disabled="index === 0" class="p-1.5 text-xs text-[var(--theme-main)] disabled:opacity-20">▲</button>
-                        <div class="w-px h-3 bg-[var(--theme-light)]"></div>
                         <button @click="moveDay(index, 1)" :disabled="index === days.length - 1" class="p-1.5 text-xs text-[var(--theme-main)] disabled:opacity-20">▼</button>
                     </div>
                 </div>
@@ -157,18 +158,18 @@
                         <h2 class="text-lg font-bold text-[var(--theme-main)] tracking-widest">旅程書櫃</h2>
                         <button @click="showSidebar = false" class="text-[var(--text-sub)]">✕</button>
                     </div>
-                    <div class="text-[10px] text-[var(--text-sub)] font-normal mt-1 opacity-70">首頁為擺放最上層旅遊書</div>
+                    <div class="text-[10px] text-[var(--text-sub)] font-normal mt-1 opacity-70 italic">首頁為擺放最上層旅遊書</div>
                 </div>
                 <div class="flex-1 overflow-y-auto p-4 space-y-3 custom-scroll">
-                    <div v-for="(trip, index) in sortedTrips" :key="trip.id" 
-                         @click="openTrip(trip.id)" 
-                         :class="currentTripId === trip.id ? 'border-[var(--theme-main)] bg-[var(--bg-card)] shadow-md' : 'border-transparent hover:bg-[var(--bg-card)] border-[var(--theme-light)]'" 
-                         class="flex items-stretch rounded-xl border bg-[var(--bg-card)] overflow-hidden transition cursor-pointer group mb-2 relative p-3">
+                    <div v-for="(trip, index) in sortedTrips" :key="trip.id" @click="openTrip(trip.id)" 
+                         :class="currentTripId === trip.id ? 'border-[var(--theme-main)] bg-[var(--bg-card)] shadow-md' : 'border-transparent hover:bg-[var(--bg-card)]'" 
+                         class="flex items-stretch rounded-xl border bg-[var(--bg-card)] overflow-hidden transition cursor-pointer mb-2 relative p-3">
                         <div class="flex-1 min-w-0 pb-6">
                             <div class="font-bold text-[var(--text-main)] text-sm truncate">{{ trip.tripName || '未命名行程' }}</div>
                             <div class="text-[10px] text-[var(--text-sub)] mt-1 font-en">{{ trip.startDate || '無日期' }}</div>
                         </div>
                         <div class="absolute bottom-2 right-2 flex items-center gap-2">
+                             <button @click.stop="openTripSettings(trip.id)" class="text-[10px] p-1 bg-white/80 rounded">⚙️</button>
                              <button @click.stop="confirmDeleteTrip(trip.id)" class="text-[var(--danger)] p-1 bg-white/80 rounded">✕</button>
                         </div>
                         <div class="w-4 bg-[var(--theme-light)]/30 border-l border-[var(--theme-light)] flex flex-col justify-center items-center gap-1">
@@ -188,7 +189,7 @@
     <div class="sticky top-0 z-30 bg-[var(--bg-body)]/95 backdrop-blur-sm border-b border-[var(--theme-light)] p-4 transition-colors">
         <button @click="showSidebar = true" class="absolute left-4 top-5 text-[var(--theme-main)]"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg></button>
         <div class="flex items-center justify-center mb-4 pl-8 pr-8">
-            <input v-model="tripName" @change="saveData" class="text-center w-full text-xl font-bold text-[var(--theme-main)] bg-transparent border-b-2 border-transparent focus:border-[var(--theme-accent)] transition py-1 tracking-widest" placeholder="旅の計画...">
+            <input v-model="tripName" @change="saveData" class="text-center w-full text-xl font-bold text-[var(--theme-main)] bg-transparent border-b-2 border-transparent focus:border-[var(--theme-accent)] transition py-1 tracking-widest" placeholder="旅の計畫...">
         </div>
         <div class="flex justify-center mb-3">
             <div class="bg-[var(--theme-light)]/30 p-1.5 rounded-full flex w-full max-w-[360px] shadow-inner gap-1 overflow-x-auto scrollbar-hide">
@@ -218,163 +219,176 @@
         </div>
     </div>
 
+    <!-- 內容區 -->
     <div class="p-5 min-h-[500px]">
+        
         <!-- PAGE 1: 行程表 -->
         <div v-if="currentTab === 'schedule'" class="space-y-6 animate-fade">
             <div v-if="weatherData" class="flex items-center justify-center gap-2 text-[var(--theme-main)] text-sm font-bold bg-[var(--theme-light)]/50 py-0.5 rounded-md">
-                <span class="text-xl">{{ weatherData.icon }}</span><span>{{ weatherData.temp }}°C</span>
+                <span class="text-xl">{{ weatherData.icon }}</span><span>{{ weatherData.temp }}°C</span><span class="text-[var(--text-sub)] font-normal text-xs">{{ weatherData.desc }}</span>
             </div>
             <div id="google-map"></div>
-            <div class="flex justify-between border-b border-[var(--theme-light)] pb-2">
-                <h2 class="text-sm font-bold">Day {{ currentDayIndex + 1 }}</h2>
+            <div class="flex justify-between items-end border-b border-[var(--theme-light)] pb-2">
+                <h2 class="text-sm font-bold">Day {{ currentDayIndex + 1 }} <span class="text-xs font-normal ml-1">{{ getDateLabel(currentDayIndex) }}</span></h2>
                 <button @click="deleteDay" class="text-[10px] text-[var(--text-sub)]">DELETE DAY</button>
             </div>
-            <div v-if="days[currentDayIndex]" class="space-y-4">
+            <div v-if="days[currentDayIndex]" class="space-y-2">
                 <template v-for="(item, index) in days[currentDayIndex].activities" :key="index">
-                    <div class="bg-[var(--bg-card)] p-3 rounded-xl border border-[var(--theme-light)] flex gap-3">
-                        <div class="w-16 flex-shrink-0">
-                            <input v-model="item.time" type="time" @change="saveData" class="text-sm font-bold bg-transparent outline-none w-full text-[var(--theme-main)]">
+                    <div class="flex items-stretch gap-0 group relative bg-[var(--bg-card)] rounded-xl border border-[var(--theme-light)] overflow-hidden p-3">
+                        <div class="flex-1 flex items-start gap-3 min-w-0">
+                            <div class="w-16 flex-shrink-0">
+                                <input v-model="item.time" type="time" @change="saveData" class="text-sm font-bold bg-transparent outline-none w-full text-[var(--theme-main)]">
+                                <select v-model="item.type" @change="saveData" class="text-[10px] bg-transparent opacity-60 w-full mt-1">
+                                    <option value="sightseeing">📷 景點</option><option value="transport">🚅 交通</option><option value="food">🍴 美食</option><option value="accommodation">🏨 住宿</option>
+                                </select>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <input v-model="item.place" @change="saveData" @focus="initAutocomplete(index, $event)" placeholder="地點名稱" class="w-full font-bold bg-transparent outline-none">
+                                <textarea v-model="item.note" @change="saveData" rows="1" @input="autoGrow($event.target)" placeholder="備註..." class="w-full text-xs text-[var(--text-sub)] bg-transparent outline-none resize-none"></textarea>
+                            </div>
+                            <button @click="deleteActivity(index)" class="text-[var(--theme-light)] hover:text-[var(--danger)]">✕</button>
                         </div>
-                        <div class="flex-1">
-                            <input v-model="item.place" @change="saveData" @focus="initAutocomplete(index, $event)" placeholder="地點" class="w-full font-bold bg-transparent outline-none mb-1">
-                            <textarea v-model="item.note" @change="saveData" rows="1" @input="autoGrow($event.target)" placeholder="備註" class="w-full text-xs text-[var(--text-sub)] bg-transparent outline-none resize-none"></textarea>
-                        </div>
-                        <button @click="deleteActivity(index)" class="text-[var(--danger)]">✕</button>
                     </div>
-                    <div v-if="index < days[currentDayIndex].activities.length - 1" class="ml-10 border-l-2 border-dotted border-[var(--theme-light)] pl-4">
-                         <textarea v-model="item.transportToNext" @change="saveData" placeholder="接駁交通..." class="text-[10px] bg-transparent outline-none w-full italic text-[var(--theme-accent)]"></textarea>
+                    <!-- 接駁交通文字欄位 -->
+                    <div v-if="index < days[currentDayIndex].activities.length - 1" class="ml-10 border-l-2 border-dotted border-[var(--theme-light)] pl-4 py-2">
+                        <button v-if="!item.transportToNext && !item.showTransportInput" @click="item.showTransportInput = true" class="text-[9px] font-bold text-[var(--theme-accent)] opacity-40 hover:opacity-100">+ 接駁備註</button>
+                        <div v-else class="flex gap-2">
+                            <textarea v-model="item.transportToNext" @change="saveData" placeholder="輸入交通資訊..." class="flex-1 text-[10px] bg-transparent outline-none italic text-[var(--theme-accent)] resize-none"></textarea>
+                            <button @click="item.transportToNext = ''; item.showTransportInput = false; saveData()" class="text-[10px] text-[var(--text-sub)]">✕</button>
+                        </div>
                     </div>
                 </template>
             </div>
             <button @click="addActivity" class="w-full py-3 border border-dashed border-[var(--theme-accent)] text-[var(--theme-accent)] rounded-xl text-xs">+ ADD ITEM</button>
+            <div v-if="days[currentDayIndex]" class="mt-4 p-3 bg-[var(--theme-light)]/20 rounded-xl">
+                <div class="text-[10px] font-bold text-[var(--text-sub)] mb-1">DAILY NOTE</div>
+                <textarea v-model="days[currentDayIndex].dailyNote" @change="saveData" rows="2" class="w-full text-xs bg-transparent outline-none" placeholder="今日總結..."></textarea>
+            </div>
         </div>
 
         <!-- PAGE 2: 消費紀錄 -->
         <div v-if="currentTab === 'expenses'" class="space-y-6 animate-fade">
-            <!-- 結算總表 -->
+            <div @click="showRates = !showRates" class="section-header"><h3 class="section-title">EXCHANGE RATES</h3><span class="section-arrow">▼</span></div>
+            <div v-show="showRates" class="bg-[var(--bg-card)] rounded-xl border p-4 grid grid-cols-3 gap-3">
+                <div v-for="(v, k) in rates" :key="k" class="text-center"><label class="text-[10px] block font-bold">{{k}}</label><input v-model.number="rates[k]" @change="saveData" class="w-full text-center border-b text-sm"></div>
+            </div>
+
+            <div @click="showAnalysis = !showAnalysis" class="section-header"><h3 class="section-title">ANALYSIS</h3><span class="section-arrow">▼</span></div>
+            <div v-show="showAnalysis" class="bg-[var(--bg-card)] p-5 rounded-xl border shadow-sm">
+                <div class="flex justify-between mb-3"><select v-model="analysisFilter" class="analysis-select"><option value="all">All</option><option v-for="m in members" :value="m">{{m}}</option></select><select v-model="analysisCurrency" class="analysis-select"><option value="TWD">TWD</option><option value="JPY">JPY</option></select></div>
+                <div class="h-32 relative"><canvas id="expenseChart"></canvas></div>
+            </div>
+
             <div @click="showSettlement = !showSettlement" class="section-header"><h3 class="section-title">SETTLEMENT</h3><span class="section-arrow">▼</span></div>
-            <div v-show="showSettlement" class="bg-[var(--theme-light)]/30 p-4 rounded-xl border border-[var(--theme-light)]">
-                <div class="flex justify-end mb-2">
-                    <select v-model="displayCurrency" class="text-[10px] font-bold border border-[var(--theme-light)] rounded px-1">
-                        <option value="TWD">TWD</option><option value="JPY">JPY</option><option value="USD">USD</option>
-                    </select>
-                </div>
+            <div v-show="showSettlement" class="bg-[var(--theme-light)]/30 p-4 rounded-xl border">
                 <div v-for="(trans, idx) in settlementPlan" :key="idx" class="settle-row py-2">
-                    <div class="settle-payer text-xs">{{ trans.from }}</div>
-                    <div class="settle-label text-[10px] px-2">給</div>
-                    <div class="settle-receiver text-xs">{{ trans.to }}</div>
-                    <div class="settle-amount text-xs">{{ trans.amount }} <span class="text-[8px] opacity-70">{{ displayCurrency }}</span></div>
+                    <div class="settle-payer text-xs">{{ trans.from }}</div><div class="settle-label">需給</div><div class="settle-receiver text-xs">{{ trans.to }}</div><div class="settle-amount text-xs">{{ trans.amount }} <span class="text-[8px]">{{ displayCurrency }}</span></div>
                 </div>
-                <div v-if="settlementPlan.length === 0" class="text-center text-[10px] text-[var(--text-sub)] py-4">無待結清款項</div>
+                <div v-if="settlementPlan.length === 0" class="text-center text-[10px] py-2">無待結清項目</div>
             </div>
 
-            <!-- 輸入表單 -->
-            <div ref="expenseForm" class="bg-[var(--bg-card)] p-4 rounded-xl border border-[var(--theme-light)] space-y-3">
-                <div class="flex gap-2">
-                    <input v-model="newExpense.title" placeholder="項目" class="flex-1 font-bold border-b border-[var(--theme-light)] pb-1 bg-transparent">
-                    <select v-model="newExpense.category" class="text-xs border rounded px-1">
-                        <option value="food">🍴 美食</option><option value="transport">🚅 交通</option><option value="other">📦 其他</option>
-                    </select>
-                </div>
-                <input v-model="newExpense.note" placeholder="備註 (選填)" class="w-full text-xs border-b border-[var(--theme-light)] pb-1 bg-transparent">
-                <div class="flex gap-2">
-                    <input type="number" v-model.number="newExpense.amount" :readonly="splitMode === 'custom'" class="flex-1 text-sm bg-[var(--bg-body)] rounded p-2" placeholder="金額">
-                    <select v-model="newExpense.currency" class="text-xs font-en border rounded px-1">
-                        <option value="TWD">TWD</option><option value="JPY">JPY</option><option value="USD">USD</option>
-                    </select>
-                </div>
+            <div ref="expenseForm" class="bg-[var(--bg-card)] p-4 rounded-xl border space-y-4 shadow-sm">
+                <div class="flex gap-2"><input v-model="newExpense.title" placeholder="項目" class="flex-1 font-bold border-b bg-transparent outline-none text-sm"><select v-model="newExpense.category" class="text-xs border rounded"><option value="food">🍴 美食</option><option value="transport">🚅 交通</option><option value="other">📦 其他</option></select></div>
+                <input v-model="newExpense.note" placeholder="備註 (選填)" class="w-full text-xs border-b bg-transparent outline-none">
+                <div class="flex gap-2"><input type="number" v-model.number="newExpense.amount" :readonly="splitMode === 'custom'" class="flex-1 text-sm bg-[var(--bg-body)] rounded p-2" placeholder="金額"><select v-model="newExpense.currency" class="text-xs border rounded"><option value="TWD">TWD</option><option value="JPY">JPY</option></select></div>
+                <div class="flex items-center gap-2"><span class="text-[10px]">日期:</span><input type="date" v-model="newExpense.date" class="text-xs border-b bg-transparent"><span class="text-[10px] ml-auto">付款人:</span><select v-model="newExpense.payer" class="text-xs border rounded"><option v-for="m in members" :value="m">{{m}}</option></select></div>
                 <div class="flex items-center gap-2">
-                    <span class="text-[10px]">日期:</span>
-                    <input type="date" v-model="newExpense.date" class="text-xs bg-transparent border-b">
-                    <span class="text-[10px] ml-auto">付款人:</span>
-                    <select v-model="newExpense.payer" class="text-xs border rounded px-1">
-                        <option v-for="m in members" :value="m">{{ m }}</option>
-                    </select>
-                </div>
-                <!-- 照片 -->
-                <div class="flex items-center gap-2">
-                    <button @click="$refs.expensePhotoInput.click()" class="p-2 bg-[var(--theme-light)] rounded-lg text-[var(--theme-main)]">📷</button>
+                    <button @click="$refs.expensePhotoInput.click()" class="p-2 bg-[var(--theme-light)] rounded-lg">📷</button>
                     <input type="file" ref="expensePhotoInput" @change="handlePhotoUpload" accept="image/*" class="hidden">
-                    <div v-if="newExpense.photo" class="relative">
-                        <img :src="newExpense.photo" class="w-10 h-10 object-cover rounded" @click="previewPhotoUrl = newExpense.photo">
-                        <button @click="newExpense.photo = null" class="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] rounded-full w-3 h-3">✕</button>
-                    </div>
+                    <img v-if="newExpense.photo" :src="newExpense.photo" class="w-10 h-10 object-cover rounded" @click="previewPhotoUrl = newExpense.photo">
                 </div>
-                <!-- 拆帳方式 -->
-                <div class="flex gap-2 text-[10px]">
-                    <button @click="changeSplitMode('equal')" :class="splitMode === 'equal' ? 'font-bold underline' : 'opacity-50'">平均</button>
-                    <button @click="changeSplitMode('custom')" :class="splitMode === 'custom' ? 'font-bold underline' : 'opacity-50'">自訂</button>
-                </div>
-                <div v-if="splitMode === 'equal'" class="flex flex-wrap gap-2">
-                    <button v-for="m in members" @click="toggleInvolved(m)" :class="newExpense.involved.includes(m) ? 'bg-[var(--theme-main)] text-white' : 'border opacity-50'" class="text-[10px] px-3 py-1 rounded-full">{{ m }}</button>
-                </div>
-                <div v-if="splitMode === 'custom'" class="space-y-2">
-                    <div v-for="m in members" :key="m" class="flex items-center justify-between">
-                        <span class="text-[10px]">{{ m }}</span>
-                        <input type="number" v-model.number="customSplitAmounts[m]" @input="updateTotalFromCustom" class="w-24 text-right border-b text-xs">
-                    </div>
-                </div>
+                <div class="flex gap-3 text-[10px]"><button @click="changeSplitMode('equal')" :class="splitMode === 'equal' ? 'font-bold underline' : 'opacity-50'">平均分擔</button><button @click="changeSplitMode('custom')" :class="splitMode === 'custom' ? 'font-bold underline' : 'opacity-50'">自訂金額</button></div>
+                <div v-if="splitMode === 'equal'" class="flex flex-wrap gap-2"><button v-for="m in members" @click="toggleInvolved(m)" :class="newExpense.involved.includes(m) ? 'bg-[var(--theme-main)] text-white' : 'border opacity-50'" class="text-[10px] px-3 py-1 rounded-full transition">{{m}}</button></div>
+                <div v-if="splitMode === 'custom'" class="space-y-2"><div v-for="m in members" :key="m" class="flex items-center justify-between"><span class="text-[10px]">{{m}}</span><input type="number" v-model.number="customSplitAmounts[m]" @input="updateTotalFromCustom" class="w-24 text-right border-b text-xs bg-transparent"></div></div>
                 <div class="flex gap-2">
-                    <button v-if="editingExpenseIndex !== null" @click="cancelEditExpense" class="flex-1 py-2 text-xs bg-gray-200 rounded">取消</button>
-                    <button @click="addExpense" class="flex-[2] py-2 text-xs bg-[var(--theme-main)] text-white rounded font-bold">{{ editingExpenseIndex !== null ? '更新紀錄' : '儲存紀錄' }}</button>
+                    <button v-if="editingExpenseIndex !== null" @click="cancelEditExpense" class="flex-1 py-2 text-xs bg-gray-200 rounded">Cancel</button>
+                    <button @click="addExpense" class="flex-[2] py-2 text-xs bg-[var(--theme-main)] text-white rounded font-bold uppercase">{{ editingExpenseIndex !== null ? 'Save Changes' : 'Add Record' }}</button>
                 </div>
             </div>
 
-            <!-- 歷史紀錄 -->
             <div class="space-y-3">
                 <div v-for="(group, dateKey) in groupedExpenses" :key="dateKey">
-                    <div class="text-[10px] font-bold text-[var(--text-sub)] border-b mb-2">{{ dateKey }}</div>
-                    <div v-for="item in group.items" :key="item.originalIndex" class="bg-[var(--bg-card)] p-3 rounded-xl border border-[var(--theme-light)] flex gap-3 relative mb-2">
+                    <div class="text-[10px] font-bold text-[var(--text-sub)] border-b mb-2 pb-1">{{ dateKey }}</div>
+                    <div v-for="item in group.items" :key="item.originalIndex" class="bg-[var(--bg-card)] p-3 rounded-xl border flex gap-3 relative mb-2 shadow-sm">
                         <div class="text-xl shrink-0">{{ getCategoryIcon(item.data.category) }}</div>
                         <div class="min-w-0 flex-1">
-                            <!-- 長文字滑動查看 -->
-                            <div class="overflow-x-auto whitespace-nowrap hide-scrollbar pr-2 cursor-grab active:cursor-grabbing">
-                                <span class="text-sm font-bold">{{ item.data.title }}</span>
-                            </div>
-                            <div v-if="item.data.note" class="overflow-x-auto whitespace-nowrap hide-scrollbar text-[9px] text-[var(--text-sub)] italic pr-2">
-                                {{ item.data.note }}
-                            </div>
+                            <div class="overflow-x-auto whitespace-nowrap hide-scrollbar cursor-grab active:cursor-grabbing"><span class="text-sm font-bold inline-block">{{ item.data.title }}</span></div>
+                            <div v-if="item.data.note" class="overflow-x-auto whitespace-nowrap hide-scrollbar text-[9px] text-[var(--text-sub)] italic"><div class="inline-block">{{ item.data.note }}</div></div>
                             <div class="text-[10px] opacity-70 mt-1">{{ item.data.payer }} 付 · {{ item.data.currency }} {{ item.data.amount }}</div>
                         </div>
-                        <!-- 右側獨立排版區：金額與功能鈕 -->
-                        <div class="flex flex-col items-end shrink-0 border-l border-[var(--theme-light)] pl-3">
-                            <div class="flex gap-2 mb-1">
-                                <button @click.stop="editExpenseRecord(item.originalIndex)" class="text-[var(--text-sub)] hover:text-[var(--theme-main)]">✎</button>
-                                <button @click.stop="deleteExpense(item.originalIndex)" class="text-[var(--text-sub)] hover:text-[var(--danger)]">✕</button>
-                            </div>
-                            <div class="text-right">
-                                <div class="font-bold text-sm">{{ item.data.currency }} {{ item.data.amount }}</div>
-                                <div v-if="item.data.currency !== 'TWD'" class="text-[9px] text-[var(--theme-accent)]">≈ {{ Math.round(item.data.amount * (rates[item.data.currency] || 1)) }} TWD</div>
-                                <div v-if="item.data.photo" @click.stop="previewPhotoUrl = item.data.photo" class="mt-1">
-                                    <img :src="item.data.photo" class="w-6 h-6 object-cover rounded border">
-                                </div>
-                            </div>
+                        <div class="flex flex-col items-end shrink-0 border-l pl-3">
+                            <div class="flex gap-2 mb-1"><button @click.stop="editExpenseRecord(item.originalIndex)" class="text-[var(--text-sub)] hover:text-[var(--theme-main)]">✎</button><button @click.stop="deleteExpense(item.originalIndex)" class="text-[var(--text-sub)] hover:text-[var(--danger)]">✕</button></div>
+                            <div class="text-right"><div class="font-bold text-sm">{{ item.data.currency }} {{ item.data.amount }}</div><div v-if="item.data.currency !== 'TWD'" class="text-[9px] text-[var(--theme-accent)]">≈ {{ Math.round(item.data.amount * (rates[item.data.currency] || 1)) }} TWD</div><img v-if="item.data.photo" :src="item.data.photo" class="w-6 h-6 object-cover rounded border mt-1" @click.stop="previewPhotoUrl = item.data.photo"></div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- 需求修正：可折疊近期更動紀錄 -->
-            <div class="mt-8 border-t border-[var(--theme-light)] pt-4">
-                <div @click="showChangelog = !showChangelog" class="flex justify-between items-center cursor-pointer mb-2">
-                    <h3 class="text-[10px] font-bold text-[var(--text-sub)] tracking-widest">RECENT CHANGES (LOG)</h3>
-                    <span class="text-[10px]">{{ showChangelog ? '▲' : '▼' }}</span>
-                </div>
+            <div class="mt-6">
+                <div @click="showChangelog = !showChangelog" class="section-header border-t pt-4"><h3 class="section-title">RECENT CHANGES</h3><span class="section-arrow">▼</span></div>
                 <div v-show="showChangelog" class="bg-[var(--theme-light)]/20 p-3 rounded-lg space-y-1 animate-fade">
-                    <div v-for="(log, idx) in changelog" :key="idx" class="text-[9px] border-b border-dashed border-[var(--theme-light)] pb-1 flex justify-between">
-                        <span class="text-[var(--text-sub)] font-en">{{ log.time }}</span>
-                        <span class="font-bold">[{{ log.action }}] {{ log.title }}</span>
-                    </div>
-                    <div v-if="changelog.length === 0" class="text-center text-[10px] py-4 italic">尚無更動紀錄</div>
+                    <div v-for="(log, idx) in changelog" :key="idx" class="text-[9px] border-b border-dashed pb-1 flex justify-between"><span class="text-[var(--text-sub)] font-en">{{ log.time }}</span><span class="font-bold">[{{ log.action }}] {{ log.title }}</span></div>
                 </div>
             </div>
         </div>
-        
-        <!-- 其他頁面保持原樣... -->
-        <div v-if="['wishlist','links','packing'].includes(currentTab)" class="text-center py-20 text-[var(--text-sub)] opacity-50">功能保持完整，尚未切換。</div>
+
+        <!-- PAGE 3: 購物美食 -->
+        <div v-if="currentTab === 'wishlist'" class="space-y-6 animate-fade">
+            <div class="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                <button @click="wishlistFilterDay = 'all'" :class="wishlistFilterDay === 'all' ? 'bg-[var(--theme-main)] text-white' : 'bg-[var(--bg-card)] border'" class="px-4 py-1.5 rounded-full text-[10px] font-bold whitespace-nowrap">全部</button>
+                <button v-for="(day, idx) in days" :key="idx" @click="wishlistFilterDay = idx" :class="wishlistFilterDay === idx ? 'bg-[var(--theme-main)] text-white shadow-sm' : 'bg-[var(--bg-card)] border'" class="px-4 py-1.5 rounded-full text-[10px] font-bold whitespace-nowrap">Day {{ idx + 1 }}</button>
+            </div>
+            <div class="space-y-3">
+                <div v-for="(item, idx) in filteredWishlist" :key="idx" class="bg-[var(--bg-card)] p-3 rounded-xl border relative">
+                    <div class="flex items-start gap-3 pr-10">
+                        <input type="checkbox" v-model="item.checked" @change="saveData" class="custom-checkbox mt-1">
+                        <div class="flex-1 min-w-0" :class="{'opacity-40': item.checked}">
+                            <div class="flex items-center gap-2"><span class="font-bold text-sm truncate">{{ item.name }}</span><span v-if="item.day !== 'all'" class="text-[8px] bg-gray-100 px-1 rounded">D{{ item.day + 1 }}</span></div>
+                            <div v-if="item.note" class="text-xs text-[var(--text-sub)] truncate">{{ item.note }}</div>
+                            <div v-if="item.url" @click="window.open(item.url, '_blank')" class="text-[9px] text-[var(--link-blue)] truncate cursor-pointer underline">{{ item.url }}</div>
+                        </div>
+                    </div>
+                    <div class="absolute top-3 right-3 flex flex-col gap-2"><button @click="openWishEditModal(item.originalIndex)" class="text-[var(--text-sub)] text-xs">✎</button></div>
+                </div>
+            </div>
+            <div class="bg-[var(--bg-card)] p-4 rounded-xl border space-y-2 mt-4">
+                <div class="flex justify-between items-center"><span class="text-xs font-bold">新增購物項目</span><select v-model="newWishItem.day" class="text-[10px] border rounded"><option value="all">不指定日期</option><option v-for="(day, idx) in days" :key="idx" :value="idx">Day {{ idx + 1 }}</option></select></div>
+                <input v-model="newWishItem.name" placeholder="項目名稱" class="w-full border-b text-sm p-1 bg-transparent"><button @click="addWishItem" class="w-full py-2 bg-[var(--theme-main)] text-white rounded text-xs">ADD</button>
+            </div>
+        </div>
+
+        <!-- PAGE 4: 常用連結 -->
+        <div v-if="currentTab === 'links'" class="space-y-4 animate-fade">
+            <h3 class="section-title">CLOUD & LINKS</h3>
+            <div class="space-y-3">
+                <div v-for="(link, idx) in externalLinks" :key="idx" class="bg-[var(--bg-card)] p-3 rounded-xl border flex justify-between items-center">
+                    <div @click="window.open(link.url, '_blank')" class="flex-1 cursor-pointer"><div class="font-bold text-sm">{{ link.title }}</div><div class="text-[9px] opacity-60 truncate">{{ link.url }}</div></div>
+                    <button @click="deleteLink(idx)" class="text-[var(--danger)] px-2">✕</button>
+                </div>
+            </div>
+            <div class="bg-[var(--bg-card)] p-4 rounded-xl border space-y-2 mt-4">
+                <input v-model="newLink.title" placeholder="標題" class="w-full border-b text-sm p-1 bg-transparent">
+                <input v-model="newLink.url" placeholder="網址 (https://...)" class="w-full border-b text-sm p-1 bg-transparent">
+                <button @click="addLink" class="w-full py-2 bg-[var(--theme-main)] text-white rounded text-xs">ADD LINK</button>
+            </div>
+        </div>
+
+        <!-- PAGE 5: 行李清單 -->
+        <div v-if="currentTab === 'packing'" class="space-y-6 animate-fade">
+            <div class="bg-[var(--bg-card)] p-4 rounded-xl border">
+                 <div class="flex justify-between items-center mb-3"><h3 class="section-title">PACKING</h3><select v-model="currentPackingMember" class="packing-member-select"><option v-for="m in members" :key="m" :value="m">{{m}}</option></select></div>
+                 <div class="flex justify-between items-end mb-1"><span class="text-[10px] font-bold">{{ currentPackingMember }} 的進度</span><span class="text-[10px] font-en font-bold text-[var(--theme-main)]">{{ packingProgress }}%</span></div>
+                 <div class="h-2 w-full bg-[var(--theme-light)] rounded-full overflow-hidden"><div class="h-full bg-[var(--theme-accent)] transition-all" :style="{ width: packingProgress + '%' }"></div></div>
+            </div>
+            <div class="space-y-2">
+                <div v-for="(item, idx) in currentPackingList" :key="idx" class="flex items-center gap-3 bg-[var(--bg-card)] p-3 rounded-xl border border-[var(--theme-light)]"><input type="checkbox" v-model="item.checked" @change="saveData" class="custom-checkbox"><input v-model="item.name" @change="saveData" class="flex-1 bg-transparent outline-none text-sm" :class="{'opacity-50 line-through': item.checked}"><button @click="deletePackingItem(idx)" class="text-[var(--danger)]">✕</button></div>
+                <div v-if="currentPackingList.length === 0" class="text-center py-10 border-2 border-dashed rounded-xl"><p class="text-xs opacity-50 mb-3">清單目前是空的</p><button @click="loadDefaultPackingItems" class="text-[10px] border px-3 py-1 rounded">載入建議項目</button></div>
+            </div>
+            <div class="flex gap-2"><input v-model="newPackingItem" @keyup.enter="addPackingItem" placeholder="新增物品..." class="flex-1 border p-2 rounded text-sm"><button @click="addPackingItem" class="bg-[var(--theme-main)] text-white px-4 rounded font-bold text-xs">ADD</button></div>
+        </div>
     </div>
 
-    <div class="fixed bottom-0 w-full bg-[var(--bg-body)]/90 backdrop-blur border-t p-2 text-center text-[10px] text-[var(--text-sub)]">{{ statusMessage }}</div>
+    <div class="fixed bottom-0 w-full bg-[var(--bg-body)] border-t p-2 text-center text-[10px] text-[var(--text-sub)] tracking-widest">{{ statusMessage }}</div>
 </div>
 
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCv9tkLUA9T3lYlz6JLf_wuWFAZLR2nRHY&libraries=places"></script>
@@ -384,187 +398,248 @@
     const firebaseConfig = { apiKey: "AIzaSyACnUlpKnoImSKhnmEDLAwKfuUOXAKijrU", authDomain: "mytrip-cf4ce.firebaseapp.com", databaseURL: "https://mytrip-cf4ce-default-rtdb.asia-southeast1.firebasedatabase.app", projectId: "mytrip-cf4ce", storageBucket: "mytrip-cf4ce.firebasestorage.app", messagingSenderId: "336541146264", appId: "1:336541146264:web:484f98b025c151a1e244ed" };
     const hasFirebase = true; 
     let db = null;
-    try { firebase.initializeApp(firebaseConfig); db = firebase.database(); } catch(e) {}
+    if (hasFirebase) { try { firebase.initializeApp(firebaseConfig); db = firebase.database(); } catch(e) {} }
 
     createApp({
         data() {
             return {
                 isLoading: true, showSidebar: false, currentTab: 'schedule', 
                 tabs: [{id:'schedule', name:'行程表'}, {id:'expenses', name:'消費紀錄'}, {id:'wishlist', name:'購物美食'}, {id:'links', name:'常用連結'}, {id:'packing', name:'行李清單'}],
-                tripName: '', statusMessage: 'Idle', currentDayIndex: 0, startDate: '',
-                days: [{ activities: [], color: '' }],
-                members: ['我', '旅伴'],
-                rates: { TWD: 1, JPY: 0.22, USD: 32.5 }, displayCurrency: 'TWD',
+                tripName: '', statusMessage: 'Connecting...', currentDayIndex: 0, startDate: '',
+                days: [{ activities: [], color: '' }], members: ['我', '旅伴'], 
+                rates: { TWD: 1, JPY: 0.22, USD: 32.5 }, displayCurrency: 'TWD', analysisCurrency: 'TWD', analysisFilter: 'all',
                 expenses: [], editingExpenseIndex: null, splitMode: 'equal', customSplitAmounts: {},
                 newExpense: { title: '', amount: 0, payer: '我', currency: 'TWD', involved: ['我', '旅伴'], category: 'other', note: '', photo: null, date: new Date().toISOString().split('T')[0] },
-                changelog: [], showChangelog: false, showSettlement: true, previewPhotoUrl: null,
-                showDayManager: false, dayColorPresets: ['#8b5e3c', '#d65d7a', '#4a7a8c', '#5e7e5e'],
-                allTrips: {}, currentTripId: null, localOrder: [], weatherData: null, mapError: false
+                wishlist: [], newWishItem: { name: '', day: 'all' }, showWishEditModal: false, editWishTemp: {},
+                externalLinks: [], newLink: { title: '', url: '' },
+                packingList: {}, currentPackingMember: '我', newPackingItem: '',
+                changelog: [], showChangelog: false, showAnalysis: true, showSettlement: true, showRates: false, showDayManager: false, 
+                previewPhotoUrl: null, mapError: false, weatherData: null, hourOptions: Array.from({length: 24}, (_, i) => i.toString().padStart(2, '0')),
+                minuteOptions: ['00', '15', '30', '45'], dayColorPresets: ['#8b5e3c', '#d65d7a', '#4a7a8c', '#5e7e5e'],
+                allTrips: {}, currentTripId: null, localOrder: [], showSettingsModal: false, editTemp: {}
             }
         },
         computed: {
-            currentThemeStyles() {
-                const trip = this.allTrips[this.currentTripId];
-                return { '--theme-main': (trip && trip.theme === 'wood' ? '#8b5e3c' : '#8b5e3c') };
-            },
-            sortedTrips() {
-                if (!this.allTrips) return [];
-                let trips = Object.keys(this.allTrips).map(id => ({ id, ...this.allTrips[id] }));
-                trips.sort((a, b) => (this.localOrder.indexOf(a.id) - this.localOrder.indexOf(b.id)));
-                return trips;
-            },
-            groupedExpenses() {
-                const groups = {};
-                this.expenses.forEach((exp, index) => {
-                    const k = exp.date || '其他日期';
-                    if (!groups[k]) groups[k] = { items: [] };
-                    groups[k].items.push({ data: exp, originalIndex: index });
-                });
-                return groups;
-            },
-            // 嚴謹的結帳算法
-            settlementPlan() {
-                if (!this.members.length) return [];
-                let balances = {};
-                this.members.forEach(m => balances[m] = 0);
-
+            currentThemeStyles() { const t = this.allTrips[this.currentTripId]; return { '--theme-main': (t && t.theme === 'wood' ? '#8b5e3c' : '#8b5e3c') }; },
+            sortedTrips() { if (!this.allTrips) return []; let trips = Object.keys(this.allTrips).map(id => ({ id, ...this.allTrips[id] })); trips.sort((a, b) => this.localOrder.indexOf(a.id) - this.localOrder.indexOf(b.id)); return trips; },
+            groupedExpenses() { const groups = {}; this.expenses.forEach((exp, index) => { const k = exp.date || 'Other'; if (!groups[k]) groups[k] = { items: [] }; groups[k].items.push({ data: exp, originalIndex: index }); }); return groups; },
+            categoryAnalysis() { 
+                const map = {food: {label:'美食', color:'#fca5a5'}, transport:{label:'交通', color:'#93c5fd'}, other:{label:'其他', color:'#d1d5db'}};
+                let stats = {}; Object.keys(map).forEach(k => stats[k] = 0);
                 this.expenses.forEach(exp => {
                     const rate = this.rates[exp.currency] || 1;
-                    const totalInTWD = parseFloat(exp.amount) * rate;
-                    
-                    // 付款者增加餘額（債權）
-                    if (balances.hasOwnProperty(exp.payer)) balances[exp.payer] += totalInTWD;
-
-                    // 參與者減少餘額（債務）
+                    const valInBase = exp.amount * rate;
+                    stats[exp.category] = (stats[exp.category] || 0) + valInBase;
+                });
+                const targetRate = this.rates[this.analysisCurrency] || 1;
+                return Object.keys(stats).map(k => ({ key:k, label:map[k].label, chartColor:map[k].color, amount: Math.round(stats[k]/targetRate) })).filter(i => i.amount > 0);
+            },
+            settlementPlan() {
+                if (!this.members.length) return [];
+                let balances = {}; this.members.forEach(m => balances[m] = 0);
+                this.expenses.forEach(exp => {
+                    const rate = this.rates[exp.currency] || 1;
+                    const totalTWD = exp.amount * rate;
+                    balances[exp.payer] += totalTWD;
                     if (exp.splitType === 'custom' && exp.customData) {
-                        Object.entries(exp.customData).forEach(([member, amt]) => {
-                            if (balances.hasOwnProperty(member)) balances[member] -= (parseFloat(amt) * rate);
-                        });
+                        Object.entries(exp.customData).forEach(([m, amt]) => { if(balances.hasOwnProperty(m)) balances[m] -= (amt * rate); });
                     } else {
-                        const involved = (exp.involved || []).filter(m => balances.hasOwnProperty(m));
-                        if (involved.length > 0) {
-                            const share = totalInTWD / involved.length;
-                            involved.forEach(m => balances[m] -= share);
-                        }
+                        const inv = (exp.involved || []).filter(m => balances.hasOwnProperty(m));
+                        if(inv.length) { const s = totalTWD / inv.length; inv.forEach(m => balances[m] -= s); }
                     }
                 });
-
-                // 貪婪演算法匹配債務
                 let debtors = [], creditors = [];
-                const targetRate = this.rates[this.displayCurrency] || 1;
-
-                Object.entries(balances).forEach(([name, bal]) => {
-                    if (bal < -0.01) debtors.push({ name, amount: Math.abs(bal) });
-                    else if (bal > 0.01) creditors.push({ name, amount: bal });
-                });
-
-                let plan = [];
-                let i = 0, j = 0;
-                while (i < debtors.length && j < creditors.length) {
-                    let d = debtors[i], c = creditors[j];
-                    let settleAmt = Math.min(d.amount, c.amount);
-                    if (settleAmt > 0.01) {
-                        plan.push({ from: d.name, to: c.name, amount: Math.round(settleAmt / targetRate) });
-                    }
-                    d.amount -= settleAmt;
-                    c.amount -= settleAmt;
-                    if (d.amount <= 0.01) i++;
-                    if (c.amount <= 0.01) j++;
+                Object.entries(balances).forEach(([n, b]) => { if(b < -0.1) debtors.push({n, a:Math.abs(b)}); else if(b > 0.1) creditors.push({n, a:b}); });
+                let plan = [], i=0, j=0; const tRate = this.rates[this.displayCurrency] || 1;
+                while(i < debtors.length && j < creditors.length){
+                    let d = debtors[i], c = creditors[j], amt = Math.min(d.a, c.a);
+                    plan.push({ from: d.n, to: c.n, amount: Math.round(amt/tRate) });
+                    d.a -= amt; c.a -= amt;
+                    if(d.a < 0.1) i++; if(c.a < 0.1) j++;
                 }
                 return plan;
-            }
+            },
+            filteredWishlist() { 
+                let list = this.wishlist.map((it, idx) => ({ ...it, originalIndex: idx }));
+                if (this.wishlistFilterDay !== 'all') list = list.filter(it => it.day === this.wishlistFilterDay);
+                return list;
+            },
+            paginatedWishlist() { return this.filteredWishlist; },
+            currentPackingList() { return this.packingList[this.currentPackingMember] || []; },
+            packingProgress() { const l = this.currentPackingList; if(!l.length) return 0; return Math.round(l.filter(i=>i.checked).length / l.length * 100); },
+            themePresets() { return { wood: {'--theme-main': '#8b5e3c'} }; }
         },
-        mounted() { this.loadTripList(); setTimeout(() => this.isLoading = false, 3000); },
+        mounted() { this.loadTripList(); setTimeout(() => this.isLoading = false, 5000); },
         methods: {
             loadTripList() {
                 const saved = localStorage.getItem('myTripBooks');
                 this.allTrips = saved ? JSON.parse(saved) : {};
                 this.syncLocalOrder();
-                const keys = Object.keys(this.allTrips);
-                if (keys.length > 0) this.openTrip(this.sortedTrips[0].id); else this.createNewTrip();
+                if (Object.keys(this.allTrips).length > 0) this.openTrip(this.sortedTrips[0].id); else this.createNewTrip();
             },
             syncLocalOrder() {
                 const order = JSON.parse(localStorage.getItem('myTripOrder') || '[]');
-                const currentIds = Object.keys(this.allTrips);
-                this.localOrder = order.filter(id => currentIds.includes(id));
-                currentIds.forEach(id => { if (!this.localOrder.includes(id)) this.localOrder.push(id); });
+                const ids = Object.keys(this.allTrips);
+                this.localOrder = order.filter(id => ids.includes(id));
+                ids.forEach(id => { if(!this.localOrder.includes(id)) this.localOrder.push(id); });
+                localStorage.setItem('myTripOrder', JSON.stringify(this.localOrder));
             },
             openTrip(id) {
                 this.currentTripId = id;
                 const d = this.allTrips[id];
                 if (d) {
-                    this.tripName = d.tripName;
-                    this.days = d.days || [{activities:[]}];
+                    this.tripName = d.tripName || '新旅程';
+                    this.days = (d.days || [{activities:[]}]).map(day => ({ 
+                        ...day, activities: (day.activities || []).map(a => ({...a, showTransportInput: !!a.transportToNext})) 
+                    }));
                     this.expenses = d.expenses || [];
+                    this.members = d.members || ['我', '旅伴'];
+                    this.wishlist = d.wishlist || [];
+                    this.externalLinks = d.externalLinks || [];
+                    this.packingList = d.packingList || {};
                     this.changelog = d.changelog || [];
-                    this.isLoading = false;
-                    this.showSidebar = false;
+                    this.startDate = d.startDate || '';
+                    this.isLoading = false; this.showSidebar = false;
+                    this.$nextTick(() => { if(this.currentTab === 'schedule') this.retryInitMap(0); if(this.currentTab === 'expenses') this.renderChart(); });
                 }
             },
             saveData() {
                 if (!this.currentTripId) return;
-                const data = { tripName: this.tripName, days: this.days, expenses: this.expenses, changelog: this.changelog };
+                const data = { tripName: this.tripName, days: this.days, expenses: this.expenses, members: this.members, wishlist: this.wishlist, externalLinks: this.externalLinks, packingList: this.packingList, changelog: this.changelog, startDate: this.startDate, theme: this.allTrips[this.currentTripId].theme || 'wood' };
                 this.allTrips[this.currentTripId] = data;
                 localStorage.setItem('myTripBooks', JSON.stringify(this.allTrips));
-                localStorage.setItem('myTripOrder', JSON.stringify(this.localOrder));
-                this.statusMessage = 'Saved';
+                this.statusMessage = 'Saved ' + new Date().toLocaleTimeString();
             },
             addChangelog(action, title) {
                 const now = new Date();
-                const log = { time: `${now.getHours()}:${now.getMinutes()}`, action, title };
-                this.changelog.unshift(log);
-                if (this.changelog.length > 10) this.changelog.pop();
+                this.changelog.unshift({ time: `${now.getHours()}:${now.getMinutes()}`, action, title });
+                if(this.changelog.length > 10) this.changelog.pop();
             },
-            handlePhotoUpload(e) {
-                const file = e.target.files[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = (res) => { this.newExpense.photo = res.target.result; };
-                reader.readAsDataURL(file);
+            addExpense() {
+                if(this.newExpense.title && this.newExpense.amount) {
+                    let record = JSON.parse(JSON.stringify(this.newExpense));
+                    record.splitType = this.splitMode;
+                    if(this.splitMode === 'custom') record.customData = this.customSplitAmounts;
+                    if(this.editingExpenseIndex !== null) {
+                        this.expenses[this.editingExpenseIndex] = record;
+                        this.addChangelog('EDIT', record.title);
+                        this.editingExpenseIndex = null;
+                    } else {
+                        this.expenses.push(record);
+                        this.addChangelog('ADD', record.title);
+                    }
+                    this.cancelEditExpense(); this.saveData();
+                }
             },
             editExpenseRecord(idx) {
                 this.editingExpenseIndex = idx;
                 const exp = this.expenses[idx];
                 this.newExpense = JSON.parse(JSON.stringify(exp));
                 this.splitMode = exp.splitType || 'equal';
-                if (this.splitMode === 'custom') this.customSplitAmounts = exp.customData || {};
-                this.$nextTick(() => this.$refs.expenseForm.scrollIntoView({ behavior: 'smooth' }));
-            },
-            addExpense() {
-                let record = JSON.parse(JSON.stringify(this.newExpense));
-                record.splitType = this.splitMode;
-                if (this.splitMode === 'custom') record.customData = this.customSplitAmounts;
-                
-                if (this.editingExpenseIndex !== null) {
-                    this.expenses[this.editingExpenseIndex] = record;
-                    this.addChangelog('EDIT', record.title);
-                } else {
-                    this.expenses.push(record);
-                    this.addChangelog('ADD', record.title);
-                }
-                this.cancelEditExpense();
-                this.saveData();
+                if(this.splitMode === 'custom') this.customSplitAmounts = exp.customData || {};
+                this.$nextTick(() => this.$refs.expenseForm.scrollIntoView({ behavior: 'smooth', block: 'start' }));
             },
             cancelEditExpense() {
                 this.editingExpenseIndex = null;
-                this.newExpense = { title: '', amount: 0, payer: '我', currency: 'TWD', involved: [...this.members], category: 'other', note: '', photo: null, date: new Date().toISOString().split('T')[0] };
+                this.newExpense = { title:'', amount:0, payer:'我', currency:'TWD', involved:[...this.members], category:'other', note:'', photo:null, date:new Date().toISOString().split('T')[0] };
             },
             deleteExpense(idx) {
-                const title = this.expenses[idx].title;
+                const t = this.expenses[idx].title;
                 this.expenses.splice(idx, 1);
-                this.addChangelog('DEL', title);
-                this.saveData();
+                this.addChangelog('DEL', t); this.saveData();
             },
-            // 其他原有工具方法保持不變
-            getDateLabel(i) { if (!this.startDate) return ''; let d = new Date(this.startDate); d.setDate(d.getDate() + i); return (d.getMonth()+1)+'/'+d.getDate(); },
+            handlePhotoUpload(e) {
+                const file = e.target.files[0]; if(!file) return;
+                const reader = new FileReader(); reader.onload = (res) => { this.newExpense.photo = res.target.result; }; reader.readAsDataURL(file);
+            },
+            addDay() {
+                this.days.splice(this.currentDayIndex + 1, 0, { activities: [], dailyNote: '', color: '' });
+                this.changeDay(this.currentDayIndex + 1); this.saveData();
+            },
+            changeDay(i) { this.currentDayIndex = i; this.$nextTick(() => this.updateMapRoute()); },
+            moveDay(idx, dir) {
+                const target = idx + dir;
+                if (target >= 0 && target < this.days.length) {
+                    [this.days[idx], this.days[target]] = [this.days[target], this.days[idx]];
+                    if (this.currentDayIndex === idx) this.currentDayIndex = target;
+                    else if (this.currentDayIndex === target) this.currentDayIndex = idx;
+                    this.saveData();
+                }
+            },
+            deleteDay() { if(confirm('刪除此日？')){ this.days.splice(this.currentDayIndex, 1); if(!this.days.length) this.days.push({activities:[]}); this.currentDayIndex = Math.max(0, this.currentDayIndex-1); this.saveData(); } },
+            addActivity() { this.days[this.currentDayIndex].activities.push({ time:'12:00', place:'', note:'', type:'sightseeing' }); this.saveData(); },
+            deleteActivity(idx) { this.days[this.currentDayIndex].activities.splice(idx, 1); this.saveData(); },
+            addWishItem() { if(this.newWishItem.name){ this.wishlist.push({...this.newWishItem, checked:false}); this.newWishItem = {name:'', day:'all'}; this.saveData(); } },
+            openWishEditModal(idx) { this.editingWishIdx = idx; this.editWishTemp = JSON.parse(JSON.stringify(this.wishlist[idx])); this.showWishEditModal = true; },
+            saveWishItemEdit() { this.wishlist[this.editingWishIdx] = this.editWishTemp; this.showWishEditModal = false; this.saveData(); },
+            addLink() { if(this.newLink.title && this.newLink.url){ this.externalLinks.push({...this.newLink}); this.newLink = {title:'', url:''}; this.saveData(); } },
+            deleteLink(idx) { this.externalLinks.splice(idx, 1); this.saveData(); },
+            addPackingItem() { if(this.newPackingItem){ if(!this.packingList[this.currentPackingMember]) this.packingList[this.currentPackingMember] = []; this.packingList[this.currentPackingMember].push({name:this.newPackingItem, checked:false}); this.newPackingItem=''; this.saveData(); } },
+            deletePackingItem(idx) { this.packingList[this.currentPackingMember].splice(idx,1); this.saveData(); },
+            loadDefaultPackingItems() {
+                const items = ["護照", "充電器", "換洗衣物", "網卡"];
+                if(!this.packingList[this.currentPackingMember]) this.packingList[this.currentPackingMember] = [];
+                items.forEach(it => this.packingList[this.currentPackingMember].push({name:it, checked:false})); this.saveData();
+            },
+            createNewTrip() {
+                const id = 'trip_' + Date.now();
+                const trip = { tripName: '新行程', days: [{activities:[]}], theme:'wood' };
+                if (hasFirebase) db.ref('trips/'+id).set(trip);
+                this.allTrips[id] = trip; this.openTrip(id);
+            },
+            confirmDeleteTrip(id) { if(confirm('確定刪除整本書？')){ if(hasFirebase) db.ref('trips/'+id).remove(); delete this.allTrips[id]; this.loadTripList(); } },
+            moveTripBook(idx, dir) {
+                const target = idx + dir;
+                if(target >= 0 && target < this.sortedTrips.length){
+                    const currentIds = this.sortedTrips.map(t => t.id);
+                    [currentIds[idx], currentIds[target]] = [currentIds[target], currentIds[idx]];
+                    this.localOrder = currentIds; localStorage.setItem('myTripOrder', JSON.stringify(this.localOrder));
+                }
+            },
+            getDateLabel(idx) { if(!this.startDate) return ''; const d = new Date(this.startDate); d.setDate(d.getDate() + idx); return (d.getMonth()+1)+'/'+d.getDate(); },
             autoGrow(el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; },
-            getCategoryIcon(c) { const m = {food:'🍴', transport:'🚅'}; return m[c] || '📦'; },
-            changeDay(i) { this.currentDayIndex = i; },
-            addDay() { this.days.splice(this.currentDayIndex+1, 0, {activities:[]}); this.changeDay(this.currentDayIndex+1); this.saveData(); },
-            moveTripBook(idx, dir) { const target = idx + dir; if(target>=0 && target<this.localOrder.length) { [this.localOrder[idx], this.localOrder[target]] = [this.localOrder[target], this.localOrder[idx]]; this.saveData(); } },
-            updateTotalFromCustom() { this.newExpense.amount = Object.values(this.customSplitAmounts).reduce((a, b) => a + (b || 0), 0); },
+            getCategoryIcon(c) { const m = {food:'🍴', transport:'🚅', accommodation:'🏨'}; return m[c] || '📦'; },
+            getHour(t) { return t ? t.split(':')[0] : '10'; },
+            getMinute(t) { return t ? t.split(':')[1] : '00'; },
+            updateTime(item, val, type) { let h = this.getHour(item.time), m = this.getMinute(item.time); item.time = (type==='hour'? `${val}:${m}` : `${h}:${val}`); this.saveData(); },
+            getTypeColor(t) { const m = {food:'bg-orange-300', transport:'bg-blue-300', accommodation:'bg-purple-300'}; return m[t] || 'bg-gray-300'; },
+            toggleInvolved(m) { const i = this.newExpense.involved.indexOf(m); if(i>-1) this.newExpense.involved.splice(i,1); else this.newExpense.involved.push(m); },
+            updateTotalFromCustom() { this.newExpense.amount = Object.values(this.customSplitAmounts).reduce((a,b)=>a+(b||0),0); },
             changeSplitMode(m) { this.splitMode = m; if(m==='custom') this.members.forEach(mem => this.customSplitAmounts[mem]=0); },
-            toggleInvolved(m) { const i = this.newExpense.involved.indexOf(m); if(i>-1) this.newExpense.involved.splice(i,1); else this.newExpense.involved.push(m); }
+            initAutocomplete(idx, e) {
+                const auto = new google.maps.places.Autocomplete(e.target);
+                auto.addListener('place_changed', () => { 
+                    const p = auto.getPlace(); 
+                    if(p.name) { this.days[this.currentDayIndex].activities[idx].place = p.name; this.saveData(); this.updateMapRoute(); }
+                });
+            },
+            retryInitMap(a) { if(a<10 && typeof google !== 'undefined') this.initMap(); else if(a<10) setTimeout(()=>this.retryInitMap(a+1), 500); },
+            initMap() {
+                this.directionsService = new google.maps.DirectionsService();
+                this.directionsRenderer = new google.maps.DirectionsRenderer({ map: new google.maps.Map(document.getElementById('google-map'), {zoom:12, center:{lat:35, lng:135}, disableDefaultUI:true}) });
+                this.updateMapRoute();
+            },
+            updateMapRoute() {
+                if(!this.directionsService) return;
+                const acts = this.days[this.currentDayIndex].activities.filter(a => a.place);
+                if(acts.length < 2) { this.directionsRenderer.setDirections({routes:[]}); return; }
+                this.directionsService.route({
+                    origin: acts[0].place, destination: acts[acts.length-1].place,
+                    waypoints: acts.slice(1,-1).map(a => ({location: a.place, stopover: true})),
+                    travelMode: 'DRIVING'
+                }, (res, status) => { if(status === 'OK') this.directionsRenderer.setDirections(res); });
+            },
+            renderChart() {
+                const ctx = document.getElementById('expenseChart'); if(!ctx) return;
+                if(this.chart) this.chart.destroy();
+                const data = this.categoryAnalysis;
+                this.chart = new Chart(ctx, { type:'doughnut', data:{ labels:data.map(i=>i.label), datasets:[{data:data.map(i=>i.amount), backgroundColor:data.map(i=>i.chartColor)}] }, options:{plugins:{legend:{display:false}}, cutout:'70%'} });
+            },
+            saveTripSettings() { this.allTrips[this.currentTripId].tripName = this.editTemp.name; this.allTrips[this.currentTripId].theme = this.editTemp.theme; this.saveData(); this.showSettingsModal = false; },
+            previewTheme(k) { this.editTemp.theme = k; },
+            openTripSettings(id) { this.pendingTripId = id; this.editTemp = { name: this.allTrips[id].tripName, theme: this.allTrips[id].theme || 'wood' }; this.showSettingsModal = true; },
+            removeMember(idx) { this.members.splice(idx,1); this.saveData(); },
+            addMember() { if(this.newMemberName){ this.members.push(this.newMemberName); this.newMemberName=''; this.saveData(); } }
         }
     }).mount('#app');
 </script>
