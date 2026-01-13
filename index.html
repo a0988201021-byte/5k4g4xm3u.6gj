@@ -742,6 +742,10 @@
                 const targetDisplayRate = parseFloat(this.rates[this.analysisCurrency] || 1);
 
                 this.expenses.forEach(exp => { 
+                    // --- 修正開始：跳過結清帳務的紀錄，不計入消費分析 ---
+                    if (exp.title && exp.title.startsWith('結清:')) return;
+                    // --- 修正結束 ---
+
                     const rate = parseFloat(this.rates[exp.currency] || 1);
                     const cat = exp.category || 'other';
                     let amountTWD = 0;
@@ -749,7 +753,7 @@
                     if (this.analysisFilter === 'all') {
                         amountTWD = parseFloat(exp.amount || 0) * rate;
                     } else { 
-                        // 特定成員分析：需與結算邏輯保持一致
+                        // 特定成員分析
                         if (exp.splitType === 'custom' && exp.customData) {
                             amountTWD = (parseFloat(exp.customData[this.analysisFilter]) || 0) * rate;
                         } else {
