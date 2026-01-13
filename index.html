@@ -596,7 +596,7 @@
                 showDayManager: false, 
                 dayColorPresets: ['#8b5e3c', '#d65d7a', '#4a7a8c', '#5e7e5e', '#b08d73', '#7ca5b8', '#d68c8c', '#9ea6b3'],
                 weatherData: null, chartInstance: null, isMapUpdating: false, localOrder: [],
-                showChangelog: false, changelog: [],
+                showChangelog: false, changelog: [],saveTimer: null,
                 themePresets: { wood: { '--bg-body': '#fdfcf8', '--bg-card': '#ffffff', '--theme-main': '#8b5e3c', '--theme-light': '#f0e6dd', '--theme-accent': '#b08d73', '--text-main': '#4a4036', '--text-sub': '#968c83', '--danger': '#d68c8c', '--link-blue': '#7ca5b8' }, sakura: { '--bg-body': '#fff5f7', '--bg-card': '#ffffff', '--theme-main': '#d65d7a', '--theme-light': '#ffe4e8', '--theme-accent': '#f4a6b5', '--text-main': '#5c3a41', '--text-sub': '#9e7e85', '--danger': '#ff6b6b', '--link-blue': '#7ca5b8' }, ocean: { '--bg-body': '#f0f8ff', '--bg-card': '#ffffff', '--theme-main': '#4a7a8c', '--theme-light': '#dcedf5', '--theme-accent': '#7fb0c2', '--text-main': '#2c3e50', '--text-sub': '#7f8c8d', '--danger': '#e74c3c', '--link-blue': '#7ca5b8' }, matcha: { '--bg-body': '#f6f9f6', '--bg-card': '#ffffff', '--theme-main': '#5e7e5e', '--theme-light': '#ddeedd', '--theme-accent': '#8daf8d', '--text-main': '#2d382d', '--text-sub': '#889988', '--danger': '#c45c5c', '--link-blue': '#7ca5b8' }, night: { '--bg-body': '#1a1a1a', '--bg-card': '#2a2a2a', '--theme-main': '#e0e0e0', '--theme-light': '#444444', '--theme-accent': '#666666', '--text-main': '#e0e0e0', '--text-sub': '#999999', '--danger': '#ff5555', '--link-blue': '#7ca5b8' } }
             }
         },
@@ -829,10 +829,34 @@
             deleteTripBook(tripId) { if(hasFirebase) db.ref('trips/' + tripId).remove(); const temp = {...this.allTrips}; delete temp[tripId]; this.allTrips = temp; if(this.currentTripId === tripId) this.loadTripList(); },
             saveData() {
                 if (!this.currentTripId) return;
-                const data = { tripName: this.tripName, days: this.days, members: this.members, expenses: this.expenses, wishlist: this.wishlist, packingList: this.packingList, rates: this.rates, externalLinks: this.externalLinks, startDate: this.startDate, theme: this.allTrips[this.currentTripId].theme || 'wood', changelog: this.changelog };
-                if (hasFirebase) db.ref('trips/' + this.currentTripId).update(data);
-                this.allTrips[this.currentTripId] = data; localStorage.setItem('myTripBooks', JSON.stringify(this.allTrips));
-                this.statusMessage = 'Saved ' + new Date().toLocaleTimeString();
+                this.statusMessage = '編輯中...';
+                
+                // 如果在 0.8 秒內重複觸發 saveData，會清除上一個計時器
+                if (this.saveTimer) clearTimeout(this.saveTimer);
+                
+                // 延遲 800 毫秒後才真正執行寫入動作
+                this.saveTimer = setTimeout(() => {
+                    const data = { 
+                        tripName: this.tripName, 
+                        days: this.days, 
+                        members: this.members, 
+                        expenses: this.expenses, 
+                        wishlist: this.wishlist, 
+                        packingList: this.packingList, 
+                        rates: this.rates, 
+                        externalLinks: this.externalLinks, 
+                        startDate: this.startDate, 
+                        theme: this.allTrips[this.currentTripId].theme || 'wood', 
+                        changelog: this.changelog 
+                    };
+                    
+                    if (hasFirebase) db.ref('trips/' + this.currentTripId).update(data);
+                    this.allTrips[this.currentTripId] = data; 
+                    localStorage.setItem('myTripBooks', JSON.stringify(this.allTrips));
+                    
+                    this.statusMessage = '已同步雲端 ' + new Date().toLocaleTimeString();
+                    this.saveTimer = null;
+                }, 800);
             },
             moveActivity(index, direction) { const list = this.days[this.currentDayIndex].activities; if (direction === -1 && index > 0) [list[index], list[index-1]] = [list[index-1], list[index]]; else if (direction === 1 && index < list.length - 1) [list[index], list[index+1]] = [list[index+1], list[index]]; this.saveData(); this.$nextTick(() => this.updateMapRoute()); },
             getSplitDetails(exp) { 
@@ -859,12 +883,45 @@
             getDateLabel(index) { if (!this.startDate) return ''; const start = new Date(this.startDate); start.setDate(start.getDate() + index); return (start.getMonth() + 1) + '/' + start.getDate(); },
             getCategoryIcon(cat) { const icons = { 'food': '🍴', 'transport': '🚅', 'ticket': '🎫', 'entertainment': '🎡', 'accommodation': '🏨', 'other': '📦' }; return icons[cat] || '📦'; },
             toggleInvolved(member) { const idx = this.newExpense.involved.indexOf(member); if (idx > -1) this.newExpense.involved.splice(idx, 1); else this.newExpense.involved.push(member); },
-            handlePhotoUpload(event) {
+           handlePhotoUpload(event) {
                 const file = event.target.files[0];
                 if (!file) return;
-                if (file.size > 2 * 1024 * 1024) { alert("圖片太大了（上限 2MB）"); return; }
+                
+                // 增加檢查：如果檔案原本就很小 (小於 200KB)，則不壓縮直接讀取，節省效能
+                if (file.size < 200 * 1024) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => { this.newExpense.photo = e.target.result; };
+                    reader.readAsDataURL(file);
+                    return;
+                }
+
                 const reader = new FileReader();
-                reader.onload = (e) => { this.newExpense.photo = e.target.result; };
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+                        const max_size = 800; // 最大邊長 800px，適合手機查看且節省空間
+
+                        if (width > height && width > max_size) {
+                            height *= max_size / width;
+                            width = max_size;
+                        } else if (height > max_size) {
+                            width *= max_size / height;
+                            height = max_size;
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        // 壓縮成 70% 品質的 JPG 字串
+                        this.newExpense.photo = canvas.toDataURL('image/jpeg', 0.7);
+                    };
+                    img.src = e.target.result;
+                };
                 reader.readAsDataURL(file);
             },
             addChangelog(action, title) {
