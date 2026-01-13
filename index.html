@@ -828,7 +828,13 @@
             },
             deleteTripBook(tripId) { if(hasFirebase) db.ref('trips/' + tripId).remove(); const temp = {...this.allTrips}; delete temp[tripId]; this.allTrips = temp; if(this.currentTripId === tripId) this.loadTripList(); },
             saveData() {
+
                 if (!this.currentTripId) return;
+       if (this.days[this.currentDayIndex] && this.days[this.currentDayIndex].activities) {
+                    this.days[this.currentDayIndex].activities.sort((a, b) => {
+                        return a.time.localeCompare(b.time);
+                    });
+                }
                 this.statusMessage = '編輯中...';
                 
                 // 如果在 0.8 秒內重複觸發 saveData，會清除上一個計時器
