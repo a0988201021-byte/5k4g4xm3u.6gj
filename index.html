@@ -606,7 +606,17 @@
                                 <div class="overflow-x-auto whitespace-nowrap hide-scrollbar flex-1 flex items-center gap-2">
                                     <!-- 顯示類別圖示 -->
                                     <span class="text-xs">{{ item.category === 'sightseeing' ? '📷' : (item.category === 'shopping' ? '🛍️' : '🍴') }}</span>
-                                    <component :is="item.url ? 'a' : 'div'" :href="item.url" target="_blank" class="font-bold text-[var(--text-main)] text-sm inline-block" :class="{'hover:text-[var(--link-blue)] hover:underline': item.url}">{{ item.name }} <span v-if="item.url" class="text-[10px] ml-1">🔗</span></component>
+                                    <!-- 標題名稱：點擊後地圖會跳轉到該地點 -->
+<div @click="focusOnPocketMarker(item)" 
+     class="font-bold text-[var(--text-main)] text-sm inline-block cursor-pointer hover:text-[var(--theme-main)] transition-colors">
+    {{ item.name }}
+</div>
+
+<!-- 超連結：只有點擊 🔗 圖示才會跳轉網址 -->
+<a v-if="item.url" :href="item.url" target="_blank" 
+   class="text-[10px] ml-1 p-1 bg-[var(--theme-light)]/50 rounded hover:bg-[var(--theme-light)] transition">
+   🔗
+</a>
                                 </div>
                                 <span v-if="item.day !== undefined && item.day !== 'all'" class="text-[9px] px-1.5 py-0.5 bg-[var(--theme-light)] text-[var(--theme-main)] rounded font-bold shrink-0">D{{ item.day + 1 }}</span>
                             </div>
@@ -904,6 +914,7 @@
                                 position: pos,
                                 map: this.pocketMap,
                                 title: item.name,
+              pocketItemIndex: item.originalIndex,
                                 icon: {
                                     // 這是一個精緻的「水滴針點」路徑
                                     path: "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z",
@@ -947,6 +958,30 @@
                 input.dataset.autocompleteInit = 'true';
             } catch (e) {}
         },
+focusOnPocketMarker(item) {
+    if (!this.pocketMap) return;
+    
+    // 在地圖標記陣列中尋找對應的地點
+    const targetMarker = this.pocketMarkers.find(m => m.pocketItemIndex === item.originalIndex);
+    
+    if (targetMarker) {
+        // 1. 將地圖中心移到該點
+        this.pocketMap.setCenter(targetMarker.getPosition());
+        // 2. 放大地圖倍率（17 是很清楚的街道層級）
+        this.pocketMap.setZoom(17);
+        
+        // 3. 讓標記跳動一下，提醒使用者在哪裡
+        targetMarker.setAnimation(google.maps.Animation.BOUNCE);
+        setTimeout(() => { targetMarker.setAnimation(null); }, 750);
+        
+        // 4. 自動滾動頁面到地圖的位置 (讓使用者看到地圖跳轉)
+        document.getElementById('pocket-map').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    } else {
+        if (!item.address) {
+            alert("此地點尚未設定地址，無法在地圖上查看喔！");
+        }
+    }
+},
             scrollToTop() {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             },
