@@ -372,7 +372,7 @@
                             <textarea v-model="item.transportToNext" @change="saveData" rows="2" 
               placeholder="交通說明..." 
               class="flex-1 text-[10px] bg-transparent border-b border-[var(--theme-light)] outline-none focus:border-[var(--theme-accent)] text-[var(--text-sub)] placeholder-[var(--theme-light)] py-1 resize-none leading-normal overflow-y-auto custom-scroll max-h-[60px]"></textarea>
-    <button @click="item.transportToNext = ''; item.showTransportInput = false; saveData()" class="text-[var(--text-sub)] hover:text-[var(--danger)] text-[10px] px-1 transition-colors mt-1">✕</button>
+    <button @click="if(confirm('確定要刪除這段交通接駁說明嗎？')) { item.transportToNext = ''; item.showTransportInput = false; saveData(); }" class="text-[var(--text-sub)] hover:text-[var(--danger)] text-[10px] px-1 transition-colors mt-1">✕</button>
 </div>
                     </div>
                 </template>
