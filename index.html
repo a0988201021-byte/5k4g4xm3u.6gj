@@ -85,6 +85,40 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
         .animate-fade { animation: fadeIn 0.3s ease-out forwards; }
+/* --- 新增功能：回到頂部按鈕 --- */
+        .back-to-top {
+            position: fixed;
+            right: 20px;
+            bottom: 80px; 
+            width: 45px;
+            height: 45px;
+            background-color: var(--theme-main);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            z-index: 100;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            opacity: 0;
+            pointer-events: none;
+        }
+        .back-to-top.show { opacity: 1; pointer-events: auto; }
+        .back-to-top:active { transform: scale(0.9); }
+
+        /* --- 新增功能：連線狀態燈 --- */
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .status-online { background-color: #4ade80; box-shadow: 0 0 6px #4ade80; }
+        .status-offline { background-color: #f87171; box-shadow: 0 0 6px #f87171; }
+        .status-syncing { background-color: #fbbf24; animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
     </style>
 </head>
 <body>
@@ -328,7 +362,7 @@
                         <button v-if="!item.transportToNext && !item.showTransportInput" @click="item.showTransportInput = true" class="text-[9px] font-bold text-[var(--theme-accent)] hover:text-[var(--theme-main)] transition-colors py-0.5 opacity-40 hover:opacity-100 flex items-center gap-1"><span>+</span> 接駁</button>
                         <div v-else class="w-full flex items-start gap-2 animate-fade-in pr-4 pb-1">
                             <span class="text-xs grayscale opacity-70 shrink-0 mt-1">🚅</span>
-                            <textarea v-model="item.transportToNext" @change="saveData" rows="3" 
+                            <textarea v-model="item.transportToNext" @change="saveData" rows="2" 
               placeholder="交通說明..." 
               class="flex-1 text-[10px] bg-transparent border-b border-[var(--theme-light)] outline-none focus:border-[var(--theme-accent)] text-[var(--text-sub)] placeholder-[var(--theme-light)] py-1 resize-none leading-normal overflow-y-auto custom-scroll max-h-[60px]"></textarea>
     <button @click="item.transportToNext = ''; item.showTransportInput = false; saveData()" class="text-[var(--text-sub)] hover:text-[var(--danger)] text-[10px] px-1 transition-colors mt-1">✕</button>
@@ -578,8 +612,14 @@
             <div class="flex gap-2 mt-4"><input v-model="newPackingItem" @keyup.enter="addPackingItem" placeholder="物品名稱..." class="flex-1 bg-[var(--bg-card)] border border-[var(--theme-light)] rounded-lg px-3 py-2.5 text-sm outline-none text-[var(--text-main)]"><button @click="addPackingItem" class="bg-[var(--theme-main)] text-white px-4 rounded-lg font-bold shadow-md hover:bg-[var(--theme-accent)] transition text-xs">ADD</button></div>
         </div>
     </div>
-
-    <div class="fixed bottom-0 w-full bg-[var(--bg-body)]/90 backdrop-blur border-t border-[var(--theme-light)] p-2 text-center text-[10px] text-[var(--text-sub)] font-en tracking-widest z-40">{{ statusMessage }}</div>
+<!-- 回到頂部按鈕 -->
+<div @click="scrollToTop" :class="['back-to-top', { 'show': showBackToTop }]">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" /></svg>
+</div>
+    <div class="fixed bottom-0 w-full bg-[var(--bg-body)]/90 backdrop-blur border-t border-[var(--theme-light)] p-2 text-center text-[10px] text-[var(--text-sub)] font-en tracking-widest z-40 flex items-center justify-center gap-2">
+    <span :class="['status-dot', isOnline ? (isSyncing ? 'status-syncing' : 'status-online') : 'status-offline']"></span>
+    {{ isOnline ? (isSyncing ? 'SYNCING...' : statusMessage) : 'OFFLINE MODE' }}
+</div>
 </div>
 
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCv9tkLUA9T3lYlz6JLf_wuWFAZLR2nRHY&libraries=places"></script>
@@ -594,7 +634,7 @@
     createApp({
         data() {
             return {
-                isLoading: true, showSidebar: false, currentTab: 'schedule', 
+                isLoading: true,showBackToTop: false, isOnline: navigator.onLine, isSyncing: false, showSidebar: false, currentTab: 'schedule', 
                 tabs: [{id:'schedule', name:'行程表'}, {id:'expenses', name:'消費紀錄'}, {id:'wishlist', name:'購物美食'}, {id:'links', name:'常用連結'}, {id:'packing', name:'行李清單'}],
                 tripName: '', statusMessage: 'Connecting...', currentDayIndex: 0, startDate: '',
                 days: [{ activities: [], dailyNote: '', color: '' }],
@@ -720,8 +760,21 @@
                 return transactions;
             }
         },
-        mounted() { this.loadTripList(); setTimeout(() => { if(this.isLoading) this.isLoading = false; }, 5000); },
+        mounted() { 
+            this.loadTripList(); 
+            setTimeout(() => { if(this.isLoading) this.isLoading = false; }, 5000); 
+            
+            // 修正：將監聽器放在 mounted 內部
+            window.addEventListener('scroll', () => {
+                this.showBackToTop = window.scrollY > 300;
+            });
+            window.addEventListener('online', () => { this.isOnline = true; });
+            window.addEventListener('offline', () => { this.isOnline = false; });
+        },
         methods: {
+            scrollToTop() {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            },
             autoGrow(element) { element.style.height = "auto"; element.style.height = (element.scrollHeight) + "px"; },
             toggleDateGroup(dateKey) { this.collapsedDates[dateKey] = !this.collapsedDates[dateKey]; },
             prevPage() { if (this.wishlistPage > 1) this.wishlistPage--; },
@@ -850,42 +903,35 @@
             },
             deleteTripBook(tripId) { if(hasFirebase) db.ref('trips/' + tripId).remove(); const temp = {...this.allTrips}; delete temp[tripId]; this.allTrips = temp; if(this.currentTripId === tripId) this.loadTripList(); },
             saveData() {
-
-                if (!this.currentTripId) return;
-       if (this.days[this.currentDayIndex] && this.days[this.currentDayIndex].activities) {
-                    this.days[this.currentDayIndex].activities.sort((a, b) => {
-                        return a.time.localeCompare(b.time);
+            if (!this.currentTripId) return;
+            if (this.days[this.currentDayIndex] && this.days[this.currentDayIndex].activities) {
+                this.days[this.currentDayIndex].activities.sort((a, b) => a.time.localeCompare(b.time));
+            }
+            this.statusMessage = 'WAITING...';
+            if (this.saveTimer) clearTimeout(this.saveTimer);
+            
+            this.saveTimer = setTimeout(() => {
+                this.isSyncing = true; // 顯示黃燈閃爍
+                const data = { 
+                    tripName: this.tripName, days: this.days, members: this.members, 
+                    expenses: this.expenses, wishlist: this.wishlist, packingList: this.packingList, 
+                    rates: this.rates, externalLinks: this.externalLinks, startDate: this.startDate, 
+                    theme: this.allTrips[this.currentTripId].theme || 'wood', changelog: this.changelog 
+                };
+                
+                if (hasFirebase) {
+                    db.ref('trips/' + this.currentTripId).update(data).then(() => {
+                        this.isSyncing = false; // 關閉閃爍
+                        this.statusMessage = 'CLOUD SYNCED ' + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                     });
-                }
-                this.statusMessage = '編輯中...';
-                
-                // 如果在 0.8 秒內重複觸發 saveData，會清除上一個計時器
-                if (this.saveTimer) clearTimeout(this.saveTimer);
-                
-                // 延遲 800 毫秒後才真正執行寫入動作
-                this.saveTimer = setTimeout(() => {
-                    const data = { 
-                        tripName: this.tripName, 
-                        days: this.days, 
-                        members: this.members, 
-                        expenses: this.expenses, 
-                        wishlist: this.wishlist, 
-                        packingList: this.packingList, 
-                        rates: this.rates, 
-                        externalLinks: this.externalLinks, 
-                        startDate: this.startDate, 
-                        theme: this.allTrips[this.currentTripId].theme || 'wood', 
-                        changelog: this.changelog 
-                    };
-                    
-                    if (hasFirebase) db.ref('trips/' + this.currentTripId).update(data);
-                    this.allTrips[this.currentTripId] = data; 
+                } else {
                     localStorage.setItem('myTripBooks', JSON.stringify(this.allTrips));
-                    
-                    this.statusMessage = '已同步雲端 ' + new Date().toLocaleTimeString();
-                    this.saveTimer = null;
-                }, 800);
-            },
+                    this.isSyncing = false;
+                    this.statusMessage = 'LOCAL SAVED';
+                }
+                this.saveTimer = null;
+            }, 800);
+        },
             moveActivity(index, direction) { const list = this.days[this.currentDayIndex].activities; if (direction === -1 && index > 0) [list[index], list[index-1]] = [list[index-1], list[index]]; else if (direction === 1 && index < list.length - 1) [list[index], list[index+1]] = [list[index+1], list[index]]; this.saveData(); this.$nextTick(() => this.updateMapRoute()); },
             getSplitDetails(exp) { 
                 let details = []; 
@@ -930,7 +976,7 @@
                         const canvas = document.createElement('canvas');
                         let width = img.width;
                         let height = img.height;
-                        const max_size = 800; // 最大邊長 800px，適合手機查看且節省空間
+                        const max_size = 600; // 最大邊長 800px，適合手機查看且節省空間
 
                         if (width > height && width > max_size) {
                             height *= max_size / width;
@@ -946,7 +992,7 @@
                         ctx.drawImage(img, 0, 0, width, height);
                         
                         // 壓縮成 70% 品質的 JPG 字串
-                        this.newExpense.photo = canvas.toDataURL('image/jpeg', 0.7);
+                        this.newExpense.photo = canvas.toDataURL('image/jpeg', 0.4);
                     };
                     img.src = e.target.result;
                 };
