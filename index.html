@@ -880,6 +880,7 @@
                 this.pocketMap = new google.maps.Map(el, {
                     zoom: 12, center: { lat: 35.68, lng: 139.76 },
                     disableDefaultUI: true,
+                    gestureHandling: 'greedy', // 讓單指可以拖動
                     styles: [{ featureType: "poi", elementType: "labels", stylers: [{ visibility: "off" }] }]
                 });
                 this.updatePocketMapMarkers();
@@ -1309,7 +1310,12 @@ confirmDeleteTransport(item) {
             updateTime(item, value, type) { let h = this.getHour(item.time), m = this.getMinute(item.time); item.time = (type === 'hour') ? `${value}:${m}` : `${h}:${value}`; this.saveData(); },
             getTypeColor(type) { switch(type) { case 'food': return 'bg-[#d8a48f]'; case 'transport': return 'bg-[#8ab8a8]'; case 'accommodation': return 'bg-[#9ea6b3]'; default: return 'bg-[#dccbba]'; } },
             retryInitMap(attempts) { if (attempts > 10) return; if (typeof google !== 'undefined') this.initMap(); else setTimeout(() => this.retryInitMap(attempts + 1), 300); },
-            initMap() { if (!document.getElementById("google-map")) return; try { this.directionsService = new google.maps.DirectionsService(); this.directionsRenderer = new google.maps.DirectionsRenderer({ map: this.map, suppressMarkers: false }); this.map = new google.maps.Map(document.getElementById("google-map"), { zoom: 12, center: { lat: 35.68, lng: 139.76 }, disableDefaultUI: true }); this.directionsRenderer.setMap(this.map); this.updateMapRoute(); } catch (e) { this.mapError = true; } },
+            initMap() { if (!document.getElementById("google-map")) return; try { this.directionsService = new google.maps.DirectionsService(); this.directionsRenderer = new google.maps.DirectionsRenderer({ map: this.map, suppressMarkers: false }); this.map = new google.maps.Map(document.getElementById("google-map"), { 
+    zoom: 12, 
+    center: { lat: 35.68, lng: 139.76 }, 
+    disableDefaultUI: true,
+    gestureHandling: 'greedy' // 讓單指可以拖動
+}); this.directionsRenderer.setMap(this.map); this.updateMapRoute(); } catch (e) { this.mapError = true; } },
             async updateMapRoute() { 
                 if (!this.directionsService || this.currentTab !== 'schedule' || this.isMapUpdating || !this.days[this.currentDayIndex]) return; 
                 this.isMapUpdating = true; 
