@@ -743,7 +743,16 @@
             }
         },
         watch: {
-            // 1. 監控分頁切換
+            // 1. 監控口袋名單變動（地圖自動標點）
+            filteredWishlist: {
+                handler() { 
+                    if(this.currentTab === 'wishlist') {
+                        this.updatePocketMapMarkers(); 
+                    }
+                },
+                deep: true
+            },
+            // 2. 監控分頁切換
             currentTab(newVal) { 
                 if (newVal === 'wishlist') {
                     this.$nextTick(() => { this.initPocketMap(); });
@@ -753,16 +762,7 @@
                     this.$nextTick(() => { this.renderChart(); }); 
                 } 
             },
-            // 2. 監控口袋清單過濾狀態
-            filteredWishlist: {
-                handler() { 
-                    if(this.currentTab === 'wishlist') {
-                        this.updatePocketMapMarkers(); 
-                    }
-                },
-                deep: true
-            },
-            // 3. 其他原有監控
+            // 3. 原有監控 (分析、成員、同步順序)
             analysisCurrency() { if(this.currentTab === 'expenses') this.renderChart(); },
             analysisFilter() { if(this.currentTab === 'expenses') this.renderChart(); },
             expenses: { handler() { if(this.currentTab === 'expenses') this.renderChart(); }, deep: true },
