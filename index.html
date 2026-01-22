@@ -107,7 +107,14 @@
         }
         .back-to-top.show { opacity: 1; pointer-events: auto; }
         .back-to-top:active { transform: scale(0.9); }
-
+/* --- 新增功能：天數導航列自動捲動 --- */
+        .day-scroll-container {
+            scroll-behavior: smooth; /* 讓滾動變平滑 */
+            -webkit-overflow-scrolling: touch;
+        }
+        .day-tab {
+            scroll-snap-align: center; /* 滾動時自動對齊中心 */
+        }
         /* --- 新增功能：連線狀態燈 --- */
         .status-dot {
             width: 8px;
@@ -277,8 +284,8 @@
             </div>
             <div class="flex items-center gap-2">
                 <div class="flex-1 min-w-0">
-                    <div class="overflow-x-auto whitespace-nowrap custom-scroll flex gap-2 pb-2 px-1">
-                        <div v-for="(day, index) in days" :key="index" class="shrink-0 cursor-pointer" @click="changeDay(index)">
+                    <div id="day-scroll-nav" class="day-scroll-container overflow-x-auto whitespace-nowrap custom-scroll flex gap-2 pb-2 px-1">
+                        <div v-for="(day, index) in days" :key="index" :id="'day-tab-' + index" class="shrink-0 cursor-pointer" @click="changeDay(index)">
                             <div :style="{ 
                                     backgroundColor: currentDayIndex === index ? (day.color || 'var(--theme-main)') : 'var(--bg-card)', 
                                     color: currentDayIndex === index ? '#fff' : (day.color || 'var(--text-sub)'),
@@ -648,7 +655,7 @@
                 wishlist: [], newWishItem: { name: '', url: '', address: '', note: '', day: 'all' },
                 wishlistFilterDay: 'all', wishlistPage: 1, wishlistItemsPerPage: 10,
                 showWishEditModal: false, editingWishIdx: null, editWishTemp: { name: '', day: 'all', note: '', url: '', address: '' },
-                showAnalysis: true, showSettlement: true, showMembers: true, collapsedDates: {},
+                showAnalysis: true, showSettlement: true, showMembers: false, collapsedDates: {},
                 packingList: {}, newPackingItem: '', currentPackingMember: '',
                 mapError: false, weatherStatus: 'loading', 
                 hourOptions: Array.from({length: 24}, (_, i) => i.toString().padStart(2, '0')),
@@ -1095,7 +1102,34 @@
                 } catch (e) {} finally { this.isMapUpdating = false; } 
             },
             geocodePromise(geocoder, address) { return new Promise((resolve, reject) => { geocoder.geocode({ 'address': address }, (results, status) => { if (status === 'OK') resolve(results); else reject(status); }); }); },
-            changeDay(index) { if(this.days[index]) { this.currentDayIndex = index; this.$nextTick(() => { this.updateMapRoute(); }); } },
+            changeDay(index) {
+            if(this.days[index]) {
+                this.currentDayIndex = index;
+                this.$nextTick(() => {
+                    // 執行地圖更新
+                    this.updateMapRoute();
+                    
+                    // --- 執行自動捲動邏輯 ---
+                    const container = document.getElementById('day-scroll-nav');
+                    const activeTab = document.getElementById('day-tab-' + index);
+                    
+                    if (container && activeTab) {
+                        // 計算：將目標按鈕捲動到容器的正中央
+                        const containerWidth = container.offsetWidth;
+                        const tabWidth = activeTab.offsetWidth;
+                        const tabOffsetLeft = activeTab.offsetLeft;
+                        
+                        // 捲動目標位置 = 按鈕左邊位置 - (容器寬度/2) + (按鈕寬度/2)
+                        const scrollPos = tabOffsetLeft - (containerWidth / 2) + (tabWidth / 2);
+                        
+                        container.scrollTo({
+                            left: scrollPos,
+                            behavior: 'smooth'
+                        });
+                    }
+                });
+            }
+        },
             moveDay(index, direction) { const target = index + direction; if (target >= 0 && target < this.days.length) { [this.days[index], this.days[target]] = [this.days[target], this.days[index]]; if (this.currentDayIndex === index) this.currentDayIndex = target; else if (this.currentDayIndex === target) this.currentDayIndex = index; this.saveData(); } },
             addDay() { const newDay = { activities: [], dailyNote: '', color: '' }; this.days.splice(this.currentDayIndex + 1, 0, newDay); this.changeDay(this.currentDayIndex + 1); this.saveData(); },
             deleteDay() { if(confirm('刪除此日？')) { this.days.splice(this.currentDayIndex, 1); if(this.days.length === 0) this.days.push({activities:[], dailyNote: '', color: ''}); this.currentDayIndex = Math.max(0, this.currentDayIndex - 1); this.saveData(); } },
