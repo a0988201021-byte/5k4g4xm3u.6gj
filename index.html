@@ -28,9 +28,14 @@
         #google-map { width: 100%; height: 300px; border-radius: 12px; filter: sepia(10%) contrast(95%); border: 4px solid #fff; box-shadow: 0 4px 6px rgba(0,0,0,0.05); position: relative; z-index: 1; }
         
         .custom-scroll::-webkit-scrollbar { height: 6px; width: 6px; }
-        .custom-scroll::-webkit-scrollbar-track { background: var(--theme-light); border-radius: 4px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: var(--theme-accent); border-radius: 4px; }
+        /* 預設隱藏捲動軸軌道與滑塊 */
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; border-radius: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: transparent; border-radius: 4px; }
 
+        /* 當滑鼠移到該區塊（例如接駁卡片）時，才顯示捲動軸顏色 */
+        .custom-scroll:hover::-webkit-scrollbar-track { background: var(--theme-light); }
+        .custom-scroll:hover::-webkit-scrollbar-thumb { background: var(--theme-accent); }
+ 
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
@@ -397,7 +402,7 @@
                             <div class="w-[3px] self-stretch rounded-full opacity-60 my-1 flex-shrink-0" :class="getTypeColor(item.type)"></div>
                             <div class="flex-1 space-y-0 pb-0.5 border-b border-[var(--theme-light)] group-hover:border-transparent transition min-w-0">
                                 <div class="flex items-center gap-1 w-full">
-                                    <input v-model="item.place" @change="saveData" @focus="initAutocomplete(index, $event)" placeholder="地點名稱" class="flex-1 text-lg font-bold text-[var(--text-main)] placeholder-[var(--text-sub)] bg-transparent outline-none min-w-0 truncate">
+                                    <input v-model="item.place" @change="saveData" @focus="initAutocomplete(index, $event)" placeholder="地點名稱" class="flex-1 text-base font-bold text-[var(--text-main)] placeholder-[var(--text-sub)] bg-transparent outline-none min-w-0 overflow-x-auto hide-scrollbar whitespace-nowrap">
                                     <button @click="handleActivityLink(item)" 
                                             class="transition p-1 flex-shrink-0"
                                             :class="item.link ? 'text-[var(--theme-main)] scale-110' : 'text-[var(--theme-light)] hover:text-[var(--theme-accent)]'">
@@ -551,7 +556,7 @@
                 <div class="space-y-4">
                     <div v-for="(group, dateKey) in groupedExpenses" :key="dateKey">
                         <div @click="toggleDateGroup(dateKey)" class="cursor-pointer flex items-center gap-2 text-[10px] font-bold text-[var(--text-sub)] tracking-wider mb-4 pl-1 border-b border-[var(--theme-light)] pb-1 w-fit hover:text-[var(--theme-main)] transition">{{ dateKey }} <span class="transition-transform duration-300" :class="{'rotate-180': collapsedDates[dateKey]}">▼</span></div>
-                        <div v-show="!collapsedDates[dateKey]" class="space-y-2 animate-fade">
+<div v-show="collapsedDates[dateKey]" class="space-y-2 animate-fade">
                             <div v-for="item in group.items" :key="item.originalIndex" @click="toggleExpandHistory(item.originalIndex)" :class="isExpanded(item.originalIndex) ? 'border-[var(--theme-light)]' : 'border-transparent'" class="bg-[var(--bg-card)] p-3 rounded-lg border group hover:border-[var(--theme-accent)] transition relative cursor-pointer">
                                 <div class="flex justify-between items-start gap-3">
                                     <div class="flex gap-3 min-w-0 flex-1">
@@ -660,8 +665,7 @@
                                     <!-- 顯示類別圖示 -->
                                     <span class="text-xs">{{ item.category === 'sightseeing' ? '📷' : (item.category === 'shopping' ? '🛍️' : '🍴') }}</span>
                                     <!-- 標題名稱：點擊後地圖會跳轉到該地點 -->
-<div @click="focusOnPocketMarker(item)" 
-     class="font-bold text-[var(--text-main)] text-sm inline-block cursor-pointer hover:text-[var(--theme-main)] transition-colors">
+<div @click="focusOnPocketMarker(item)" class="font-bold text-[var(--text-main)] text-sm inline-block cursor-pointer hover:text-[var(--theme-main)] transition-colors overflow-x-auto hide-scrollbar whitespace-nowrap max-w-full">
     {{ item.name }}
 </div>
 
